@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2d5016;
+  --color-secondary: #d4a574;
+  --color-accent: #8b5a3c;
+  --color-background: #121a0d; /* Ink background */
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Georgia", ui-serif, serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-[#f2e9e1] font-sans antialiased selection:bg-secondary/30 selection:text-secondary;
+    /* Removed the global radial gradient to rely on page specific backgrounds if needed */
+  }
+}
+
+/* Glassmorphic utilities */
+@layer utilities {
+  .glass {
+    @apply bg-primary/15 backdrop-blur-[12px] border border-secondary/30;
+  }
+  .glass-panel {
+    @apply bg-primary/15 backdrop-blur-[12px] border border-secondary/30;
+  }
+  .glass-card {
+    @apply bg-primary/15 backdrop-blur-[12px] border border-secondary/30 rounded-2xl p-6 transition-all hover:bg-primary/20;
+  }
+  .glass-border-primary {
+    @apply border-primary/40 shadow-[0_0_40px_rgba(45,80,22,0.2)];
+  }
+  .glass-border-secondary {
+    @apply border-secondary/40 shadow-[0_0_40px_rgba(212,165,116,0.2)];
+  }
+  .shadow-glow {
+    @apply shadow-[0_0_40px_rgba(139,90,60,0.2)];
+  }
+  .shadow-glow-primary {
+    @apply shadow-[0_0_40px_rgba(45,80,22,0.2)];
+  }
+  .shadow-glow-secondary {
+    @apply shadow-[0_0_40px_rgba(212,165,116,0.2)];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-secondary/50 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-secondary/80;
+}
