@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   AlertTriangle,
@@ -54,7 +54,7 @@ const ERROR_BADGE: Record<ErrorType, { label: string; color: string }> = {
 
 // ─── Tab: Erreurs ─────────────────────────────────────────────────────────────
 
-function ErrorRow({ entry }: { entry: ErrorEntry }) {
+function ErrorRow({ entry }: { key?: React.Key; entry: ErrorEntry }) {
   const [open, setOpen] = useState(false);
   const badge = ERROR_BADGE[entry.type];
 
