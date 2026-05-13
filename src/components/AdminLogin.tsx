@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { Lock, Unlock, X, Edit3, History, Trash2 } from 'lucide-react';
+import { Lock, Unlock, X, Edit3, History, Trash2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AuditEntry {
@@ -81,31 +81,60 @@ function AuditPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
+function formatLockoutTime(ms: number): string {
+  const min = Math.ceil(ms / 60000);
+  return `${min} min`;
+}
+
 export function AdminButton() {
   const { isAdmin, isEditMode, toggleEditMode, logout, login } = useAdmin();
   const [showModal, setShowModal] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [code, setCode] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
+  const [locked, setLocked] = useState(false);
+  const [lockRemaining, setLockRemaining] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await login(code);
-    if (ok) {
+    const result = await login(code);
+    if (result.ok) {
       setShowModal(false);
       setCode('');
-      setError(false);
+      setError('');
+      setLocked(false);
+    } else if (result.locked) {
+      setLocked(true);
+      setLockRemaining(result.remainingMs ?? 0);
+      setError('');
     } else {
-      setError(true);
+      setError('Code incorrect.');
     }
+  };
+
+  const openModal = () => {
+    // Check current lockout state before showing modal
+    const now = Date.now();
+    try {
+      const raw = localStorage.getItem('admin_rate');
+      if (raw) {
+        const rate = JSON.parse(raw);
+        if (rate.lockedUntil > now) {
+          setLocked(true);
+          setLockRemaining(rate.lockedUntil - now);
+        } else {
+          setLocked(false);
+        }
+      }
+    } catch {}
+    setShowModal(true);
   };
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 items-end">
+      <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-2 items-end">
         {isAdmin ? (
           <>
-            {/* Historique — discret */}
             <button
               onClick={() => setShowAudit(v => !v)}
               title="Historique des modifications"
@@ -114,7 +143,6 @@ export function AdminButton() {
               <History className="w-3 h-3" />
             </button>
 
-            {/* Mode édition */}
             <button
               onClick={toggleEditMode}
               className={`px-4 py-3 text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 border ${
@@ -127,7 +155,6 @@ export function AdminButton() {
               {isEditMode ? 'Quitter Edition' : 'Mode Edition'}
             </button>
 
-            {/* Déconnexion */}
             <button
               onClick={logout}
               className="p-3 border border-primary bg-[#121a0d] text-[#f2e9e1]/50 hover:text-red-400 hover:border-red-400 transition-all flex items-center justify-center"
@@ -138,7 +165,7 @@ export function AdminButton() {
           </>
         ) : (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openModal}
             className="p-4 border border-primary bg-[#121a0d] text-[#f2e9e1]/20 hover:text-secondary hover:border-secondary transition-all rounded-sm shadow-glow-primary hover:shadow-glow-secondary"
             title="Accès Admin"
           >
@@ -147,7 +174,6 @@ export function AdminButton() {
         )}
       </div>
 
-      {/* Modal login */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
@@ -163,6 +189,7 @@ export function AdminButton() {
               >
                 <X className="w-5 h-5" />
               </button>
+
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-secondary/10 flex items-center justify-center rounded">
                   <Lock className="w-5 h-5 text-secondary" />
@@ -172,31 +199,43 @@ export function AdminButton() {
                   <p className="text-[10px] text-[#f2e9e1]/50 uppercase tracking-widest mt-1">Édition du site</p>
                 </div>
               </div>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                <input
-                  type="password"
-                  value={code}
-                  onChange={(e) => { setCode(e.target.value); setError(false); }}
-                  className="w-full bg-[#121a0d] border border-primary p-3 text-[#f2e9e1] font-mono tracking-[0.3em] text-center focus:outline-none focus:border-secondary transition-colors"
-                  placeholder="••••••••"
-                  autoFocus
-                />
-                {error && (
-                  <p className="text-[10px] uppercase font-bold text-red-400 text-center">Code incorrect.</p>
-                )}
-                <button
-                  type="submit"
-                  className="w-full bg-secondary text-background font-bold uppercase tracking-widest py-3 hover:bg-accent transition-colors"
-                >
-                  Déverrouiller
-                </button>
-              </form>
+
+              {locked ? (
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <ShieldAlert className="w-8 h-8 text-red-400" />
+                  <p className="text-[11px] text-red-400 text-center uppercase tracking-widest font-bold">
+                    Accès temporairement bloqué
+                  </p>
+                  <p className="text-[10px] text-[#f2e9e1]/40 text-center">
+                    Réessayez dans {formatLockoutTime(lockRemaining)}
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                  <input
+                    type="password"
+                    value={code}
+                    onChange={(e) => { setCode(e.target.value); setError(''); }}
+                    className="w-full bg-[#121a0d] border border-primary p-3 text-[#f2e9e1] font-mono tracking-[0.3em] text-center focus:outline-none focus:border-secondary transition-colors"
+                    placeholder="••••••••"
+                    autoFocus
+                  />
+                  {error && (
+                    <p className="text-[10px] uppercase font-bold text-red-400 text-center">{error}</p>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-full bg-secondary text-background font-bold uppercase tracking-widest py-3 hover:bg-accent transition-colors"
+                  >
+                    Déverrouiller
+                  </button>
+                </form>
+              )}
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Panneau historique */}
       <AnimatePresence>
         {showAudit && isAdmin && <AuditPanel onClose={() => setShowAudit(false)} />}
       </AnimatePresence>

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Pencil, ImagePlus } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
 interface EditableTextProps {
@@ -16,23 +16,29 @@ export function EditableText({ value, onChange, as: Component = 'span', classNam
   if (isEditMode) {
     if (multiline) {
       return (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`bg-[#121a0d]/90 border border-secondary text-[#f2e9e1] rounded p-2 w-full font-sans resize-y focus:outline-none focus:ring-1 focus:ring-secondary ${className}`}
-          rows={3}
-          onClick={(e) => e.stopPropagation()}
-        />
+        <div className="relative group/edit w-full">
+          <Pencil className="absolute -top-2 -right-2 w-3 h-3 text-secondary opacity-60 z-10 pointer-events-none" />
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`bg-[#121a0d]/90 border border-secondary text-[#f2e9e1] rounded p-2 w-full font-sans resize-y focus:outline-none focus:ring-1 focus:ring-secondary ${className}`}
+            rows={3}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       );
     }
     return (
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`bg-[#121a0d]/90 border border-secondary text-[#f2e9e1] rounded p-1 w-full font-sans focus:outline-none focus:ring-1 focus:ring-secondary ${className}`}
-        onClick={(e) => e.stopPropagation()}
-      />
+      <div className="relative inline-flex items-center gap-1 w-full group/edit">
+        <Pencil className="absolute -top-2 -right-2 w-3 h-3 text-secondary opacity-60 z-10 pointer-events-none" />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`bg-[#121a0d]/90 border border-secondary text-[#f2e9e1] rounded p-1 w-full font-sans focus:outline-none focus:ring-1 focus:ring-secondary ${className}`}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
     );
   }
 
@@ -62,15 +68,19 @@ export function EditableImage({ src, alt, onChange, className }: EditableImagePr
     return (
       <div className={`relative group w-full h-full ${className}`}>
         {src ? (
-          <img src={src} alt={alt} className="w-full h-full object-cover mix-blend-screen opacity-90" />
+          <img src={src} alt={alt} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-[#162111] flex items-center justify-center text-secondary text-xs uppercase tracking-widest">
             Aucune image
           </div>
         )}
 
+        {/* Badge icône d'édition image */}
+        <div className="absolute top-2 right-2 bg-secondary text-background rounded-sm p-1 z-20 shadow pointer-events-none">
+          <ImagePlus className="w-3 h-3" />
+        </div>
+
         <div className="absolute inset-0 bg-[#121a0d]/80 p-4 flex flex-col justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          {/* Bouton upload fichier */}
           <button
             onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
             className="flex items-center gap-2 bg-secondary text-background text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:bg-accent transition-colors"
@@ -79,10 +89,8 @@ export function EditableImage({ src, alt, onChange, className }: EditableImagePr
             Importer une image
           </button>
 
-          {/* Séparateur */}
           <span className="text-[#f2e9e1]/30 text-[9px] uppercase tracking-widest">ou</span>
 
-          {/* URL manuelle */}
           <div className="flex flex-col items-center gap-1 w-full max-w-xs">
             <label className="text-[10px] text-secondary uppercase tracking-widest">Coller une URL</label>
             <input

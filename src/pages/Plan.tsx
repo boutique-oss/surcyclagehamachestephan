@@ -18,7 +18,7 @@ export function Plan() {
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeAnnotation, setActiveAnnotation] = useState<number | null>(null);
-  
+
   const [content, setContent] = useContent('page_plan', {
     planImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2400&auto=format&fit=crop',
     annotations: DEFAULT_ANNOTATIONS
@@ -31,7 +31,6 @@ export function Plan() {
     });
   };
 
-  
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
 
@@ -61,45 +60,54 @@ export function Plan() {
   }, []);
 
   const handleDownload = () => {
-    // Basic image download mapping to "PDF download" intent for now
     const link = document.createElement('a');
-    link.href = 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2400&auto=format&fit=crop';
+    link.href = content.planImage;
     link.download = 'Plan_Fauteuil_Reception.jpg';
     link.click();
   };
 
   return (
-    <div className="flex-1 w-full max-w-6xl mx-auto flex flex-col gap-6 pb-12 h-[calc(100vh-80px)]">
-      <div className="flex items-center justify-between glass-panel p-4 rounded-lg border-l-4 border-l-secondary">
-        <div>
-          <h1 className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">03. Plan Technique A3</h1>
-          <p className="text-[10px] text-[#f2e9e1] opacity-70 tracking-widest mt-1">Glissez pour déplacer • Utilisez les boutons pour zoomer</p>
+    <div className="flex-1 w-full max-w-6xl mx-auto flex flex-col gap-3 md:gap-6 pb-4 md:pb-12 h-[calc(100vh-80px)]">
+      {/* Barre outils — tout en ligne sur mobile */}
+      <div className="flex flex-row items-center justify-between gap-2 glass-panel p-3 md:p-4 rounded-lg border-l-4 border-l-secondary flex-wrap">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-secondary truncate">Plan Technique A3</h1>
+          <p className="text-[9px] md:text-[10px] text-[#f2e9e1] opacity-70 tracking-widest mt-0.5 hidden sm:block">Glissez · Zoom</p>
         </div>
-        
-        <div className="flex items-center gap-4">
+
+        {/* Contrôles en ligne */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Zoom controls */}
           <div className="flex bg-[#121a0d] border border-primary rounded overflow-hidden">
-            <button onClick={handleZoomOut} className="px-3 py-2 hover:bg-primary/50 text-secondary transition-colors"><ZoomOut className="w-4 h-4" /></button>
-            <div className="px-3 py-2 text-[10px] uppercase tracking-widest border-x border-primary w-16 text-center text-secondary font-bold flex items-center justify-center">
+            <button onClick={handleZoomOut} className="px-2 md:px-3 py-1.5 md:py-2 hover:bg-primary/50 text-secondary transition-colors">
+              <ZoomOut className="w-3 h-3 md:w-4 md:h-4" />
+            </button>
+            <div className="px-2 md:px-3 py-1.5 md:py-2 text-[9px] md:text-[10px] uppercase tracking-widest border-x border-primary w-12 md:w-16 text-center text-secondary font-bold flex items-center justify-center">
               {Math.round(scale * 100)}%
             </div>
-            <button onClick={handleZoomIn} className="px-3 py-2 hover:bg-primary/50 text-secondary transition-colors"><ZoomIn className="w-4 h-4" /></button>
+            <button onClick={handleZoomIn} className="px-2 md:px-3 py-1.5 md:py-2 hover:bg-primary/50 text-secondary transition-colors">
+              <ZoomIn className="w-3 h-3 md:w-4 md:h-4" />
+            </button>
           </div>
-          
-          <div className="flex gap-2">
-            <button onClick={handleReset} className="px-4 py-2 border border-primary text-[10px] font-bold uppercase tracking-widest hover:bg-primary text-secondary transition-colors">
+
+          {/* Boutons action */}
+          <div className="flex gap-1.5 md:gap-2">
+            <button onClick={handleReset} className="px-2 md:px-4 py-1.5 md:py-2 border border-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest hover:bg-primary text-secondary transition-colors">
               Reset
             </button>
-            <button onClick={toggleFullscreen} className="px-3 py-2 bg-primary text-secondary hover:bg-secondary hover:text-background transition-colors">
-              <Maximize className="w-4 h-4" />
+            <button onClick={toggleFullscreen} className="px-2 md:px-3 py-1.5 md:py-2 bg-primary text-secondary hover:bg-secondary hover:text-background transition-colors">
+              <Maximize className="w-3 h-3 md:w-4 md:h-4" />
             </button>
-            <button onClick={handleDownload} className="px-4 py-2 bg-accent text-background font-bold uppercase tracking-widest hover:bg-[#a6704d] transition-colors flex items-center gap-2">
-              <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export PDF</span>
+            <button onClick={handleDownload} className="px-2 md:px-4 py-1.5 md:py-2 bg-accent text-background font-bold uppercase tracking-widest hover:bg-[#a6704d] transition-colors flex items-center gap-1.5">
+              <Download className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline text-[9px] md:text-[10px]">Export</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div 
+      {/* Conteneur plan */}
+      <div
         ref={containerRef}
         className={cn(
           "relative flex-1 bg-[#121a0d] border border-primary shadow-glow-primary overflow-hidden",
@@ -108,32 +116,30 @@ export function Plan() {
         style={{ cursor: 'grab' }}
       >
         <motion.div
-           drag
-           dragConstraints={containerRef}
-           animate={controls}
-           style={{ scale }}
-           className="w-full h-full flex items-center justify-center origin-center"
+          drag
+          dragConstraints={containerRef}
+          animate={controls}
+          style={{ scale }}
+          className="w-full h-full flex items-center justify-center origin-center"
         >
-          {/* We use a specific container to hold the image and annotations so annotations scale and pan with it */}
-          <div className="relative inline-block border-8 border-background p-4 bg-primary/20">
+          <div className="relative inline-block border-4 md:border-8 border-background p-2 md:p-4 bg-primary/20">
             {isEditMode ? (
               <div className="w-full max-w-[1200px]">
-                <EditableImage 
-                  src={content.planImage} 
+                <EditableImage
+                  src={content.planImage}
                   onChange={(val) => setContent({...content, planImage: val})}
                 />
               </div>
             ) : (
-               <img 
-                 src={content.planImage} 
-                 alt="Plan Technique A3"
-                 className="max-w-[1200px] w-full h-auto pointer-events-none opacity-90 mix-blend-screen"
-                 style={{ filter: 'sepia(0.5) hue-rotate(60deg) saturate(2) brightness(0.9)' }} 
-               />
+              <img
+                src={content.planImage}
+                alt="Plan Technique A3"
+                className="max-w-[1200px] w-full h-auto pointer-events-none"
+              />
             )}
-            
+
             {content.annotations.map((ann) => (
-              <div 
+              <div
                 key={ann.id}
                 className="absolute"
                 style={{ top: `${ann.y}%`, left: `${ann.x}%` }}
@@ -141,25 +147,25 @@ export function Plan() {
                 onMouseLeave={() => setActiveAnnotation(null)}
               >
                 <div className="relative -ml-3 -mt-3">
-                  <div className="w-8 h-8 bg-secondary text-background flex items-center justify-center text-xs font-bold shadow-glow-secondary cursor-help z-10 relative hover:scale-110 transition-transform">
+                  <div className="w-6 h-6 md:w-8 md:h-8 bg-secondary text-background flex items-center justify-center text-[10px] md:text-xs font-bold shadow-glow-secondary cursor-help z-10 relative hover:scale-110 transition-transform">
                     {ann.id}
                   </div>
-                  
+
                   {(activeAnnotation === ann.id || isEditMode) && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`absolute top-10 left-1/2 -translate-x-1/2 w-56 p-4 glass-panel border-l-4 border-l-secondary z-20 ${isEditMode ? '' : 'pointer-events-none'}`}
+                      className={`absolute top-8 md:top-10 left-1/2 -translate-x-1/2 w-44 md:w-56 p-3 md:p-4 glass-panel border-l-4 border-l-secondary z-20 ${isEditMode ? '' : 'pointer-events-none'}`}
                     >
                       {isEditMode ? (
                         <>
-                           <EditableText value={ann.title} onChange={(val) => updateAnnotation(ann.id, 'title', val)} as="div" className="text-secondary font-bold text-xs uppercase tracking-widest mb-2" />
-                           <EditableText value={ann.desc} onChange={(val) => updateAnnotation(ann.id, 'desc', val)} as="div" multiline className="text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90" />
+                          <EditableText value={ann.title} onChange={(val) => updateAnnotation(ann.id, 'title', val)} as="div" className="text-secondary font-bold text-xs uppercase tracking-widest mb-2" />
+                          <EditableText value={ann.desc} onChange={(val) => updateAnnotation(ann.id, 'desc', val)} as="div" multiline className="text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90" />
                         </>
                       ) : (
                         <>
-                          <h4 className="text-secondary font-bold text-xs uppercase tracking-widest mb-2">{ann.title}</h4>
-                          <p className="text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90">{ann.desc}</p>
+                          <h4 className="text-secondary font-bold text-[10px] md:text-xs uppercase tracking-widest mb-1 md:mb-2">{ann.title}</h4>
+                          <p className="text-[10px] md:text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90">{ann.desc}</p>
                         </>
                       )}
                     </motion.div>
