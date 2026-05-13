@@ -10,6 +10,8 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // VITE_ADMIN_HASH est automatiquement exposé via import.meta.env — pas besoin de le redéfinir ici.
+      // Défini dans .env.local (non commité) : VITE_ADMIN_HASH=<sha256_du_mot_de_passe>
     },
     resolve: {
       alias: {

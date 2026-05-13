@@ -1,93 +1,164 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  ReactNode,
+} from 'react';
+import { errorMonitor } from '../lib/errorMonitor';
 
 interface AdminContextType {
   isAdmin: boolean;
+  isEditMode: boolean;
   login: (code: string) => Promise<{ ok: boolean; locked: boolean; remainingMs?: number }>;
   logout: () => void;
-  isEditMode: boolean;
   toggleEditMode: () => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-const ADMIN_HASH = 'f9a08fb80b89de612e9ce8cffbd695c8eb7b61b2c634b99322ce5095993afcde';
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
-const RATE_KEY = 'admin_rate';
+// Hash SHA-256 du mot de passe admin.
+// Défini à la compilation via VITE_ADMIN_HASH dans .env.local
+// Pour générer : dans la console navigateur → hashPwd('votre_mot_de_passe').then(console.log)
+const ADMIN_HASH: string =
+  (import.meta.env.VITE_ADMIN_HASH as string | undefined) ??
+  'f9a08fb80b89de612e9ce8cffbd695c8eb7b61b2c634b99322ce5095993afcde';
 
-async function hashInput(input: string): Promise<string> {
-  const bytes = new TextEncoder().encode(input);
-  const buffer = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(buffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 30 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+
+// Clé obfusquée — rend la manipulation manuelle moins évidente
+const RATE_KEY = '__s_r';
+
+interface RateState {
+  attempts: number;
+  lockedUntil: number;
 }
 
-function getRateState(): { attempts: number; lockedUntil: number } {
+// Variable module — survit aux remontages React mais se réinitialise au rechargement de page.
+// Double protection avec sessionStorage (ne traverse pas les onglets/fenêtres).
+let memRate: RateState = { attempts: 0, lockedUntil: 0 };
+
+function loadRate(): RateState {
   try {
-    const raw = localStorage.getItem(RATE_KEY);
-    return raw ? JSON.parse(raw) : { attempts: 0, lockedUntil: 0 };
+    const raw = sessionStorage.getItem(RATE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(atob(raw)) as RateState;
+      // Synchronise la mémoire avec la session (si rechargement de page)
+      memRate = { ...parsed };
+      return parsed;
+    }
   } catch {
-    return { attempts: 0, lockedUntil: 0 };
+    // sessionStorage inaccessible ou données corrompues — fallback mémoire
+  }
+  return { ...memRate };
+}
+
+function saveRate(state: RateState) {
+  memRate = { ...state };
+  try {
+    sessionStorage.setItem(RATE_KEY, btoa(JSON.stringify(state)));
+  } catch {
+    // sessionStorage plein ou bloqué — la protection mémoire reste active
   }
 }
 
-function setRateState(state: { attempts: number; lockedUntil: number }) {
-  localStorage.setItem(RATE_KEY, JSON.stringify(state));
+async function hashPwd(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const buffer = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Exposé globalement uniquement en dev pour faciliter la génération du hash
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).hashPwd = hashPwd;
 }
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  // Admin state is NEVER restored from localStorage — must authenticate each session
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const login = async (code: string): Promise<{ ok: boolean; locked: boolean; remainingMs?: number }> => {
+  // Démarre le moniteur d'erreurs dès le chargement de l'app
+  useEffect(() => {
+    errorMonitor.install();
+  }, []);
+
+  const doLogout = useCallback(() => {
+    setIsAdmin(false);
+    setIsEditMode(false);
+  }, []);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(doLogout, SESSION_TIMEOUT_MS);
+  }, [doLogout]);
+
+  // Déconnexion automatique après 30 min d'inactivité
+  useEffect(() => {
+    if (!isAdmin) {
+      if (idleTimer.current) {
+        clearTimeout(idleTimer.current);
+        idleTimer.current = null;
+      }
+      return;
+    }
+    resetIdleTimer();
+    const events = ['mousemove', 'keydown', 'click', 'touchstart'] as const;
+    events.forEach((e) => document.addEventListener(e, resetIdleTimer, { passive: true }));
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, resetIdleTimer));
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, [isAdmin, resetIdleTimer]);
+
+  const login = async (
+    code: string
+  ): Promise<{ ok: boolean; locked: boolean; remainingMs?: number }> => {
     const now = Date.now();
-    const rate = getRateState();
+    const rate = loadRate();
 
-    // Check lockout
     if (rate.lockedUntil > now) {
       return { ok: false, locked: true, remainingMs: rate.lockedUntil - now };
     }
 
-    const hash = await hashInput(code);
+    const hash = await hashPwd(code);
 
     if (hash === ADMIN_HASH) {
-      // Reset rate on success
-      setRateState({ attempts: 0, lockedUntil: 0 });
+      saveRate({ attempts: 0, lockedUntil: 0 });
       setIsAdmin(true);
       return { ok: true, locked: false };
     }
 
-    // Wrong password — increment attempt counter
     const newAttempts = rate.attempts + 1;
     if (newAttempts >= MAX_ATTEMPTS) {
-      setRateState({ attempts: 0, lockedUntil: now + LOCKOUT_DURATION_MS });
-    } else {
-      setRateState({ attempts: newAttempts, lockedUntil: 0 });
+      saveRate({ attempts: 0, lockedUntil: now + LOCKOUT_MS });
+      return { ok: false, locked: true, remainingMs: LOCKOUT_MS };
     }
-
-    return { ok: false, locked: newAttempts >= MAX_ATTEMPTS };
+    saveRate({ attempts: newAttempts, lockedUntil: 0 });
+    return { ok: false, locked: false };
   };
 
-  const logout = () => {
-    setIsAdmin(false);
-    setIsEditMode(false);
-  };
+  const logout = () => doLogout();
 
   const toggleEditMode = () => {
-    if (isAdmin) setIsEditMode(!isEditMode);
+    if (isAdmin) setIsEditMode((v) => !v);
   };
 
   return (
-    <AdminContext.Provider value={{ isAdmin, login, logout, isEditMode, toggleEditMode }}>
+    <AdminContext.Provider value={{ isAdmin, isEditMode, login, logout, toggleEditMode }}>
       {children}
     </AdminContext.Provider>
   );
 }
 
 export const useAdmin = () => {
-  const context = useContext(AdminContext);
-  if (!context) throw new Error('useAdmin must be used within an AdminProvider');
-  return context;
+  const ctx = useContext(AdminContext);
+  if (!ctx) throw new Error('useAdmin doit être utilisé dans AdminProvider');
+  return ctx;
 };

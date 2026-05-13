@@ -1,85 +1,8 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { Lock, Unlock, X, Edit3, History, Trash2, ShieldAlert, Save } from 'lucide-react';
+import { Lock, Unlock, X, Edit3, ShieldAlert, Save, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-interface AuditEntry {
-  key: string;
-  oldVal: string;
-  newVal: string;
-  ts: string;
-}
-
-function AuditPanel({ onClose }: { onClose: () => void }) {
-  const [logs, setLogs] = useState<AuditEntry[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('admin_audit_log') || '[]');
-    } catch {
-      return [];
-    }
-  });
-
-  const clearLogs = () => {
-    localStorage.removeItem('admin_audit_log');
-    setLogs([]);
-  };
-
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-      + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  return (
-    <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-      className="fixed top-0 right-0 h-full w-80 bg-[#121a0d] border-l border-primary z-[90] flex flex-col shadow-glow-primary"
-    >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-primary">
-        <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-secondary" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#f2e9e1]">Historique</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {logs.length > 0 && (
-            <button
-              onClick={clearLogs}
-              title="Effacer l'historique"
-              className="p-1 text-[#f2e9e1]/30 hover:text-red-400 transition-colors"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-          )}
-          <button onClick={onClose} className="p-1 text-[#f2e9e1]/30 hover:text-secondary transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-        {logs.length === 0 ? (
-          <p className="text-[#f2e9e1]/20 text-[10px] uppercase tracking-widest text-center mt-8">
-            Aucune modification enregistrée
-          </p>
-        ) : (
-          logs.map((entry, i) => (
-            <div key={i} className="bg-[#1a2514] border border-primary/50 rounded p-2 text-[10px]">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-secondary font-mono truncate max-w-[140px]">{entry.key}</span>
-                <span className="text-[#f2e9e1]/30">{formatDate(entry.ts)}</span>
-              </div>
-              <div className="text-red-400/60 truncate">− {entry.oldVal || '(vide)'}</div>
-              <div className="text-green-400/60 truncate">+ {entry.newVal || '(vide)'}</div>
-            </div>
-          ))
-        )}
-      </div>
-    </motion.div>
-  );
-}
+import { AdminPanel, useErrorCount } from './AdminPanel';
 
 function formatLockoutTime(ms: number): string {
   const min = Math.ceil(ms / 60000);
@@ -89,16 +12,15 @@ function formatLockoutTime(ms: number): string {
 export function AdminButton() {
   const { isAdmin, isEditMode, toggleEditMode, logout, login } = useAdmin();
   const [showModal, setShowModal] = useState(false);
-  const [showAudit, setShowAudit] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
   const [lockRemaining, setLockRemaining] = useState(0);
   const [saved, setSaved] = useState(false);
+  const errorCount = useErrorCount();
 
   const handleSave = () => {
-    // Le contenu est déjà auto-sauvegardé dans localStorage à chaque frappe.
-    // Ce bouton confirme visuellement et quitte le mode édition.
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
     toggleEditMode();
@@ -112,6 +34,8 @@ export function AdminButton() {
       setCode('');
       setError('');
       setLocked(false);
+      // Ouvre automatiquement le panneau admin à la connexion
+      setShowPanel(true);
     } else if (result.locked) {
       setLocked(true);
       setLockRemaining(result.remainingMs ?? 0);
@@ -122,12 +46,12 @@ export function AdminButton() {
   };
 
   const openModal = () => {
-    // Check current lockout state before showing modal
-    const now = Date.now();
+    // Lit l'état de verrouillage depuis sessionStorage (même après rechargement)
     try {
-      const raw = localStorage.getItem('admin_rate');
+      const raw = sessionStorage.getItem('__s_r');
       if (raw) {
-        const rate = JSON.parse(raw);
+        const rate = JSON.parse(atob(raw));
+        const now = Date.now();
         if (rate.lockedUntil > now) {
           setLocked(true);
           setLockRemaining(rate.lockedUntil - now);
@@ -139,20 +63,36 @@ export function AdminButton() {
     setShowModal(true);
   };
 
+  const handleLogout = () => {
+    logout();
+    setShowPanel(false);
+  };
+
   return (
     <>
+      {/* Boutons flottants */}
       <div className="fixed bottom-6 right-6 z-50 hidden md:flex flex-col gap-2 items-end">
         {isAdmin ? (
           <>
+            {/* Bouton panneau admin avec badge erreurs */}
             <button
-              onClick={() => setShowAudit(v => !v)}
-              title="Historique des modifications"
-              className="p-2 border border-primary bg-[#121a0d] text-[#f2e9e1]/30 hover:text-secondary hover:border-secondary transition-all flex items-center justify-center rounded-sm"
+              onClick={() => setShowPanel((v) => !v)}
+              title="Console Admin"
+              className={`relative p-2 border transition-all flex items-center justify-center rounded-sm ${
+                showPanel
+                  ? 'bg-secondary/10 border-secondary text-secondary shadow-glow-secondary'
+                  : 'bg-[#121a0d] border-primary text-[#f2e9e1]/30 hover:text-secondary hover:border-secondary'
+              }`}
             >
-              <History className="w-3 h-3" />
+              <LayoutDashboard className="w-3 h-3" />
+              {errorCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[7px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none animate-pulse">
+                  {errorCount > 9 ? '9+' : errorCount}
+                </span>
+              )}
             </button>
 
-            {/* Boutons édition en ligne : Save + Toggle */}
+            {/* Edit / Save */}
             <div className="flex flex-row gap-2 items-center">
               {isEditMode && (
                 <button
@@ -180,8 +120,9 @@ export function AdminButton() {
               </button>
             </div>
 
+            {/* Déconnexion */}
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="p-3 border border-primary bg-[#121a0d] text-[#f2e9e1]/50 hover:text-red-400 hover:border-red-400 transition-all flex items-center justify-center"
               title="Se déconnecter"
             >
@@ -199,6 +140,7 @@ export function AdminButton() {
         )}
       </div>
 
+      {/* Modal de connexion */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
@@ -261,8 +203,9 @@ export function AdminButton() {
         )}
       </AnimatePresence>
 
+      {/* Panneau Admin */}
       <AnimatePresence>
-        {showAudit && isAdmin && <AuditPanel onClose={() => setShowAudit(false)} />}
+        {isAdmin && showPanel && <AdminPanel onClose={() => setShowPanel(false)} />}
       </AnimatePresence>
     </>
   );
