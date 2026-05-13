@@ -26,7 +26,7 @@
     @apply bg-primary/15 backdrop-blur-[12px] border border-secondary/30;
   }
   .glass-card {
-    @apply bg-primary/15 backdrop-blur-[12px] border border-secondary/30 rounded-2xl p-6 transition-all hover:bg-primary/20;
+    @apply bg-primary/15 backdrop-blur-[12px] border border-secondary/30 rounded-xl md:rounded-2xl p-3 md:p-6 transition-all hover:bg-primary/20;
   }
   .glass-border-primary {
     @apply border-primary/40 shadow-[0_0_40px_rgba(45,80,22,0.2)];
