@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Upload, Pencil, ImagePlus } from 'lucide-react';
+import { Upload, Pencil, Link2 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
 interface EditableTextProps {
@@ -66,40 +66,39 @@ export function EditableImage({ src, alt, onChange, className }: EditableImagePr
 
   if (isEditMode) {
     return (
-      <div className={`relative group w-full h-full ${className}`}>
-        {src ? (
-          <img src={src} alt={alt} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-[#162111] flex items-center justify-center text-secondary text-xs uppercase tracking-widest">
-            Aucune image
-          </div>
-        )}
-
-        {/* Badge icône d'édition image */}
-        <div className="absolute top-2 right-2 bg-secondary text-background rounded-sm p-1 z-20 shadow pointer-events-none">
-          <ImagePlus className="w-3 h-3" />
+      // Le wrapper hérite du positionnement (absolute inset-0 etc.) via className
+      // puis passe en flex-col : image en haut, contrôles EN DESSOUS sans overlay
+      <div className={`flex flex-col ${className ?? ''}`}>
+        {/* Image — occupe tout l'espace restant, jamais obscurcie */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {src ? (
+            <img src={src} alt={alt} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-[#162111] flex items-center justify-center text-secondary text-xs uppercase tracking-widest">
+              Aucune image
+            </div>
+          )}
         </div>
 
-        <div className="absolute inset-0 bg-[#121a0d]/80 p-4 flex flex-col justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        {/* Contrôles EXTÉRIEURS à la zone image — barre sous la photo */}
+        <div className="flex-shrink-0 flex flex-row items-center gap-2 bg-[#0d1309] border-t border-secondary/40 px-2 py-1.5">
           <button
             onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
-            className="flex items-center gap-2 bg-secondary text-background text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:bg-accent transition-colors"
+            className="flex items-center gap-1.5 bg-secondary text-background text-[9px] font-bold uppercase tracking-widest px-3 py-1 hover:bg-accent transition-colors whitespace-nowrap"
           >
             <Upload className="w-3 h-3" />
-            Importer une image
+            Importer
           </button>
 
-          <span className="text-[#f2e9e1]/30 text-[9px] uppercase tracking-widest">ou</span>
-
-          <div className="flex flex-col items-center gap-1 w-full max-w-xs">
-            <label className="text-[10px] text-secondary uppercase tracking-widest">Coller une URL</label>
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <Link2 className="w-3 h-3 text-secondary flex-shrink-0" />
             <input
               type="text"
               defaultValue={src.startsWith('data:') ? '' : src}
               onBlur={(e) => { if (e.target.value.trim()) onChange(e.target.value.trim()); }}
               onClick={(e) => e.stopPropagation()}
-              placeholder="https://..."
-              className="w-full bg-[#162111] border border-primary text-xs text-[#f2e9e1] p-2 rounded focus:outline-none focus:border-secondary"
+              placeholder="Coller une URL…"
+              className="flex-1 min-w-0 bg-transparent border-b border-primary text-[10px] text-[#f2e9e1]/70 py-0.5 focus:outline-none focus:border-secondary transition-colors placeholder:text-[#f2e9e1]/20"
             />
           </div>
         </div>
@@ -116,6 +115,5 @@ export function EditableImage({ src, alt, onChange, className }: EditableImagePr
   }
 
   if (!src) return null;
-
   return <img src={src} alt={alt} className={className} />;
 }
