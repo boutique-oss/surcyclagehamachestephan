@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Gabarit } from './pages/Gabarit';
 import { Recette } from './pages/Recette';
@@ -56,7 +56,7 @@ function Navigation() {
 export default function App() {
   return (
     <AdminProvider>
-      <BrowserRouter>
+      <HashRouter>
         <div className="min-h-screen bg-background text-[#f2e9e1] flex flex-col pt-16 font-sans">
           <Navigation />
           <AdminButton />
@@ -72,7 +72,7 @@ export default function App() {
           </div>
         </main>
       </div>
-      </BrowserRouter>
+      </HashRouter>
     </AdminProvider>
   );
 }
