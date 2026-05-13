@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { Lock, Unlock, X, Edit3, History, Trash2, ShieldAlert } from 'lucide-react';
+import { Lock, Unlock, X, Edit3, History, Trash2, ShieldAlert, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AuditEntry {
@@ -94,6 +94,15 @@ export function AdminButton() {
   const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
   const [lockRemaining, setLockRemaining] = useState(0);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    // Le contenu est déjà auto-sauvegardé dans localStorage à chaque frappe.
+    // Ce bouton confirme visuellement et quitte le mode édition.
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+    toggleEditMode();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,17 +152,33 @@ export function AdminButton() {
               <History className="w-3 h-3" />
             </button>
 
-            <button
-              onClick={toggleEditMode}
-              className={`px-4 py-3 text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 border ${
-                isEditMode
-                  ? 'bg-secondary text-background border-secondary shadow-glow-secondary'
-                  : 'bg-[#121a0d] text-secondary border-primary hover:border-secondary'
-              } transition-all`}
-            >
-              <Edit3 className="w-4 h-4" />
-              {isEditMode ? 'Quitter Edition' : 'Mode Edition'}
-            </button>
+            {/* Boutons édition en ligne : Save + Toggle */}
+            <div className="flex flex-row gap-2 items-center">
+              {isEditMode && (
+                <button
+                  onClick={handleSave}
+                  title="Sauvegarder et quitter"
+                  className={`p-3 border font-bold flex items-center justify-center gap-2 transition-all ${
+                    saved
+                      ? 'bg-green-700 border-green-500 text-white'
+                      : 'bg-[#121a0d] border-secondary text-secondary hover:bg-secondary hover:text-background'
+                  }`}
+                >
+                  <Save className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={toggleEditMode}
+                className={`px-4 py-3 text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 border ${
+                  isEditMode
+                    ? 'bg-secondary text-background border-secondary shadow-glow-secondary'
+                    : 'bg-[#121a0d] text-secondary border-primary hover:border-secondary'
+                } transition-all`}
+              >
+                <Edit3 className="w-4 h-4" />
+                {isEditMode ? 'Quitter' : 'Éditer'}
+              </button>
+            </div>
 
             <button
               onClick={logout}

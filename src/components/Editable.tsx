@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Upload, Pencil, Link2 } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, ImagePlus, X, Check } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
 interface EditableTextProps {
@@ -16,7 +16,7 @@ export function EditableText({ value, onChange, as: Component = 'span', classNam
   if (isEditMode) {
     if (multiline) {
       return (
-        <div className="relative group/edit w-full">
+        <div className="relative w-full">
           <Pencil className="absolute -top-2 -right-2 w-3 h-3 text-secondary opacity-60 z-10 pointer-events-none" />
           <textarea
             value={value}
@@ -29,7 +29,7 @@ export function EditableText({ value, onChange, as: Component = 'span', classNam
       );
     }
     return (
-      <div className="relative inline-flex items-center gap-1 w-full group/edit">
+      <div className="relative inline-flex w-full">
         <Pencil className="absolute -top-2 -right-2 w-3 h-3 text-secondary opacity-60 z-10 pointer-events-none" />
         <input
           type="text"
@@ -54,23 +54,28 @@ interface EditableImageProps {
 
 export function EditableImage({ src, alt, onChange, className }: EditableImageProps) {
   const { isEditMode } = useAdmin();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => onChange(reader.result as string);
-    reader.readAsDataURL(file);
+  const openPanel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUrlInput(src.startsWith('data:') ? '' : src);
+    setOpen(true);
+  };
+
+  const handleApply = () => {
+    const val = urlInput.trim();
+    if (val) {
+      onChange(val);
+      setOpen(false);
+    }
   };
 
   if (isEditMode) {
     return (
-      // Le wrapper hérite du positionnement (absolute inset-0 etc.) via className
-      // puis passe en flex-col : image en haut, contrôles EN DESSOUS sans overlay
-      <div className={`flex flex-col ${className ?? ''}`}>
-        {/* Image — occupe tout l'espace restant, jamais obscurcie */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+      <>
+        {/* Image affichée normalement — aucun overlay */}
+        <div className={className}>
           {src ? (
             <img src={src} alt={alt} className="w-full h-full object-cover" />
           ) : (
@@ -78,39 +83,60 @@ export function EditableImage({ src, alt, onChange, className }: EditableImagePr
               Aucune image
             </div>
           )}
-        </div>
-
-        {/* Contrôles EXTÉRIEURS à la zone image — barre sous la photo */}
-        <div className="flex-shrink-0 flex flex-row items-center gap-2 bg-[#0d1309] border-t border-secondary/40 px-2 py-1.5">
+          {/* Badge discret — positionné dans le coin, ouvre le panel externe */}
           <button
-            onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
-            className="flex items-center gap-1.5 bg-secondary text-background text-[9px] font-bold uppercase tracking-widest px-3 py-1 hover:bg-accent transition-colors whitespace-nowrap"
+            onClick={openPanel}
+            title="Changer l'image"
+            className="absolute top-2 right-2 z-20 bg-secondary text-background p-1.5 rounded-sm hover:bg-accent transition-colors shadow-glow-secondary"
           >
-            <Upload className="w-3 h-3" />
-            Importer
+            <ImagePlus className="w-3 h-3" />
           </button>
-
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            <Link2 className="w-3 h-3 text-secondary flex-shrink-0" />
-            <input
-              type="text"
-              defaultValue={src.startsWith('data:') ? '' : src}
-              onBlur={(e) => { if (e.target.value.trim()) onChange(e.target.value.trim()); }}
-              onClick={(e) => e.stopPropagation()}
-              placeholder="Coller une URL…"
-              className="flex-1 min-w-0 bg-transparent border-b border-primary text-[10px] text-[#f2e9e1]/70 py-0.5 focus:outline-none focus:border-secondary transition-colors placeholder:text-[#f2e9e1]/20"
-            />
-          </div>
         </div>
 
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFile}
-        />
-      </div>
+        {/* Panel URL — fixed, entièrement hors de la zone image */}
+        {open && (
+          <div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-background/70 backdrop-blur-sm p-4"
+            onClick={() => setOpen(false)}
+          >
+            <div
+              className="bg-[#121a0d] border border-secondary/50 rounded-lg p-6 w-full max-w-sm shadow-glow-secondary flex flex-col gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ImagePlus className="w-4 h-4 text-secondary" />
+                  <span className="text-[11px] uppercase tracking-widest text-secondary font-bold">Changer l'image</span>
+                </div>
+                <button onClick={() => setOpen(false)} className="text-[#f2e9e1]/30 hover:text-secondary transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[9px] uppercase tracking-widest text-[#f2e9e1]/50">URL de l'image</label>
+                <input
+                  type="text"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleApply()}
+                  autoFocus
+                  placeholder="https://…"
+                  className="w-full bg-[#0d1309] border border-primary text-sm text-[#f2e9e1] p-3 rounded focus:outline-none focus:border-secondary transition-colors"
+                />
+              </div>
+
+              <button
+                onClick={handleApply}
+                className="w-full bg-secondary text-background font-bold uppercase tracking-widest py-2.5 text-[10px] hover:bg-accent transition-colors flex items-center justify-center gap-2"
+              >
+                <Check className="w-3 h-3" />
+                Appliquer
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
