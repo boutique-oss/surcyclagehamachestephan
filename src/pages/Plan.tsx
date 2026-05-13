@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, Maximize, Download, Info } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Download } from 'lucide-react';
 import { motion, useAnimationControls } from 'motion/react';
 import { cn } from '../lib/utils';
 import { useContent } from '../lib/useContent';

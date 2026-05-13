@@ -20,12 +20,15 @@ function logChange<T>(key: string, oldVal: T, newVal: T) {
   } catch {}
 }
 
-export function useContent<T>(key: string, defaultValue: T): [T, (val: T) => void] {
+export function useContent<T extends object>(key: string, defaultValue: T): [T, (val: T) => void] {
   const [content, setContent] = useState<T>(() => {
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Merge with defaultValue so any newly-added fields are always present,
+        // even when the user has an older version saved in localStorage.
+        return { ...defaultValue, ...parsed } as T;
       } catch {
         return defaultValue;
       }
