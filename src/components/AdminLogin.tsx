@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import { Lock, Unlock, X, Edit3, History, Trash2, ShieldAlert, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Pencil, ImagePlus, X, Check } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
