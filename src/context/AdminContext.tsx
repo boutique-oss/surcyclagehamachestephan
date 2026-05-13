@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface AdminContextType {
   isAdmin: boolean;
-  login: (code: string) => boolean;
+  login: (code: string) => Promise<boolean>;
   logout: () => void;
   isEditMode: boolean;
   toggleEditMode: () => void;
@@ -10,12 +10,23 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
+const ADMIN_HASH = 'f9a08fb80b89de612e9ce8cffbd695c8eb7b61b2c634b99322ce5095993afcde';
+
+async function hashInput(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const buffer = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('app_admin') === 'true');
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const login = (code: string) => {
-    if (code === '4895') {
+  const login = async (code: string): Promise<boolean> => {
+    const hash = await hashInput(code);
+    if (hash === ADMIN_HASH) {
       setIsAdmin(true);
       localStorage.setItem('app_admin', 'true');
       return true;
