@@ -34,6 +34,8 @@ export function Plan() {
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
   const pinchDist = useRef<number | null>(null);
+  // true sur iPhone/Android (pointer = doigt = coarse)
+  const isMobile = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
 
   const handleZoomIn = () => setScale(s => Math.min(s + 0.25, 3));
   const handleZoomOut = () => setScale(s => Math.max(s - 0.25, 0.5));
@@ -150,6 +152,7 @@ export function Plan() {
       </div>
 
       {/* Conteneur plan */}
+      {/* Mobile fullscreen : fond noir, juste l'image, tap pour fermer */}
       <div
         ref={containerRef}
         className={cn(
@@ -159,15 +162,16 @@ export function Plan() {
             : "flex-1"
         )}
         style={{
-          cursor: 'grab',
+          cursor: isFullscreen && isMobile.current ? 'default' : 'grab',
           ...(isFullscreen ? {
             paddingTop: 'env(safe-area-inset-top, 0px)',
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           } : {}),
         }}
+        onClick={isFullscreen && isMobile.current ? exitFullscreen : undefined}
       >
-        {/* Bouton fermer — desktop + mobile */}
-        {isFullscreen && (
+        {/* Bouton fermer — desktop uniquement */}
+        {isFullscreen && !isMobile.current && (
           <button
             onClick={exitFullscreen}
             className="absolute right-4 z-10 bg-background/80 backdrop-blur-sm text-secondary border border-secondary/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-secondary hover:text-background transition-colors"
@@ -176,66 +180,85 @@ export function Plan() {
             ✕ Fermer
           </button>
         )}
-        <motion.div
-          drag
-          dragConstraints={containerRef}
-          animate={controls}
-          style={{ scale }}
-          className="w-full h-full flex items-center justify-center origin-center"
-        >
-          <div className="relative inline-block border-4 md:border-8 border-background p-2 md:p-4 bg-primary/20">
-            {isEditMode ? (
-              <div className="w-full max-w-[1200px]">
-                <EditableImage
-                  src={content.planImage}
-                  onChange={(val) => setContent({...content, planImage: val})}
-                />
-              </div>
-            ) : (
-              <img
-                src={content.planImage}
-                alt="Plan Technique A3"
-                className="max-w-[1200px] w-full h-auto pointer-events-none"
-              />
-            )}
 
-            {content.annotations.map((ann) => (
-              <div
-                key={ann.id}
-                className="absolute"
-                style={{ top: `${ann.y}%`, left: `${ann.x}%` }}
-                onMouseEnter={() => setActiveAnnotation(ann.id)}
-                onMouseLeave={() => setActiveAnnotation(null)}
-              >
-                <div className="relative -ml-3 -mt-3">
-                  <div className="w-6 h-6 md:w-8 md:h-8 bg-secondary text-background flex items-center justify-center text-[10px] md:text-xs font-bold shadow-glow-secondary cursor-help z-10 relative hover:scale-110 transition-transform">
-                    {ann.id}
-                  </div>
-
-                  {(activeAnnotation === ann.id || isEditMode) && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`absolute top-8 md:top-10 left-1/2 -translate-x-1/2 w-44 md:w-56 p-3 md:p-4 glass-panel border-l-4 border-l-secondary z-20 ${isEditMode ? '' : 'pointer-events-none'}`}
-                    >
-                      {isEditMode ? (
-                        <>
-                          <EditableText value={ann.title} onChange={(val) => updateAnnotation(ann.id, 'title', val)} as="div" className="text-secondary font-bold text-xs uppercase tracking-widest mb-2" />
-                          <EditableText value={ann.desc} onChange={(val) => updateAnnotation(ann.id, 'desc', val)} as="div" multiline className="text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90" />
-                        </>
-                      ) : (
-                        <>
-                          <h4 className="text-secondary font-bold text-[10px] md:text-xs uppercase tracking-widest mb-1 md:mb-2">{ann.title}</h4>
-                          <p className="text-[10px] md:text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90">{ann.desc}</p>
-                        </>
-                      )}
-                    </motion.div>
-                  )}
+        {isFullscreen && isMobile.current ? (
+          /* ── Mobile fullscreen : image seule, sans cadre ni annotations ── */
+          <motion.div
+            drag
+            dragConstraints={containerRef}
+            animate={controls}
+            style={{ scale, width: '100%', height: '100%' }}
+            className="flex items-center justify-center origin-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={content.planImage}
+              alt="Plan Technique A3"
+              className="w-full h-full object-contain pointer-events-none select-none"
+            />
+          </motion.div>
+        ) : (
+          /* ── Normal / desktop fullscreen : cadre + annotations ── */
+          <motion.div
+            drag
+            dragConstraints={containerRef}
+            animate={controls}
+            style={{ scale }}
+            className="w-full h-full flex items-center justify-center origin-center"
+          >
+            <div className="relative inline-block border-4 md:border-8 border-background p-2 md:p-4 bg-primary/20">
+              {isEditMode ? (
+                <div className="w-full max-w-[1200px]">
+                  <EditableImage
+                    src={content.planImage}
+                    onChange={(val) => setContent({...content, planImage: val})}
+                  />
                 </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+              ) : (
+                <img
+                  src={content.planImage}
+                  alt="Plan Technique A3"
+                  className="max-w-[1200px] w-full h-auto pointer-events-none"
+                />
+              )}
+
+              {content.annotations.map((ann) => (
+                <div
+                  key={ann.id}
+                  className="absolute"
+                  style={{ top: `${ann.y}%`, left: `${ann.x}%` }}
+                  onMouseEnter={() => setActiveAnnotation(ann.id)}
+                  onMouseLeave={() => setActiveAnnotation(null)}
+                >
+                  <div className="relative -ml-3 -mt-3">
+                    <div className="w-6 h-6 md:w-8 md:h-8 bg-secondary text-background flex items-center justify-center text-[10px] md:text-xs font-bold shadow-glow-secondary cursor-help z-10 relative hover:scale-110 transition-transform">
+                      {ann.id}
+                    </div>
+                    {(activeAnnotation === ann.id || isEditMode) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`absolute top-8 md:top-10 left-1/2 -translate-x-1/2 w-44 md:w-56 p-3 md:p-4 glass-panel border-l-4 border-l-secondary z-20 ${isEditMode ? '' : 'pointer-events-none'}`}
+                      >
+                        {isEditMode ? (
+                          <>
+                            <EditableText value={ann.title} onChange={(val) => updateAnnotation(ann.id, 'title', val)} as="div" className="text-secondary font-bold text-xs uppercase tracking-widest mb-2" />
+                            <EditableText value={ann.desc} onChange={(val) => updateAnnotation(ann.id, 'desc', val)} as="div" multiline className="text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90" />
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="text-secondary font-bold text-[10px] md:text-xs uppercase tracking-widest mb-1 md:mb-2">{ann.title}</h4>
+                            <p className="text-[10px] md:text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90">{ann.desc}</p>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
