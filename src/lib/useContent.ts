@@ -39,20 +39,26 @@ export function useContent<T extends object>(key: string, defaultValue: T): [T, 
   const updateContent = (newVal: T) => {
     logChange(key, content, newVal);
     setContent(newVal);
+    // Force immediate localStorage write
+    localStorage.setItem(key, JSON.stringify(newVal));
   };
 
   useEffect(() => {
     localStorage.setItem(key, JSON.stringify(content));
   }, [key, content]);
 
-  // Sync changes across tabs/windows
+  // Sync changes across tabs/windows with improved reliability
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue) {
         try {
           const newVal = JSON.parse(e.newValue);
-          setContent({ ...defaultValue, ...newVal } as T);
-        } catch {}
+          // Ensure all fields are present with defaults
+          const mergedVal = { ...defaultValue, ...newVal } as T;
+          setContent(mergedVal);
+        } catch (error) {
+          console.warn(`Failed to sync ${key}:`, error);
+        }
       }
     };
 

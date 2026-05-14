@@ -75,14 +75,16 @@ export function Recette() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(recettes));
   }, [recettes]);
 
-  // Sync changes across tabs/windows
+  // Sync changes across tabs/windows with improved reliability
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
           const newVal = JSON.parse(e.newValue);
           setRecettes(newVal);
-        } catch {}
+        } catch (error) {
+          console.warn(`Failed to sync recipes:`, error);
+        }
       }
     };
 
