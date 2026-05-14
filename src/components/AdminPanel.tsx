@@ -18,9 +18,12 @@ import {
   ChevronRight,
   Copy,
   Check,
+  RefreshCw,
+  CloudOff,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { errorMonitor, ErrorEntry, ErrorType } from '../lib/errorMonitor';
+import { supabase } from '../lib/supabase';
 
 // ─── Hook erreurs live ────────────────────────────────────────────────────────
 
@@ -229,21 +232,77 @@ function getLoadTime(): string {
   return 'N/A';
 }
 
-// ─── Sync Export / Import ────────────────────────────────────────────────────
+// ─── Sync Supabase ───────────────────────────────────────────────────────────
 
 const CONTENT_KEYS = ['page_home', 'page_gabarit', 'page_recette', 'page_plan'];
 
+type SyncStatus = 'idle' | 'syncing' | 'ok' | 'error';
+
 function SyncPanel() {
+  const [connected, setConnected] = useState<boolean | null>(null);
+  const [cloudKeys, setCloudKeys] = useState<string[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [lastSync, setLastSync] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const checkConnection = async () => {
+    if (!supabase) { setConnected(false); return; }
+    try {
+      const { data, error } = await supabase.from('content').select('key');
+      if (error) { setConnected(false); return; }
+      setConnected(true);
+      setCloudKeys((data ?? []).map((r: { key: string }) => r.key));
+    } catch {
+      setConnected(false);
+    }
+  };
+
+  useEffect(() => { checkConnection(); }, []);
+
+  const handlePushToCloud = async () => {
+    if (!supabase) return;
+    setSyncStatus('syncing');
+    try {
+      for (const k of CONTENT_KEYS) {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        let value: unknown;
+        try { value = JSON.parse(raw); } catch { continue; }
+        await supabase.from('content').upsert({ key: k, value, updated_at: new Date().toISOString() });
+      }
+      setLastSync(new Date().toLocaleTimeString('fr-FR'));
+      setSyncStatus('ok');
+      await checkConnection();
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
+
+  const handlePullFromCloud = async () => {
+    if (!supabase) return;
+    setSyncStatus('syncing');
+    try {
+      const { data } = await supabase.from('content').select('key, value');
+      (data ?? []).forEach((row: { key: string; value: unknown }) => {
+        localStorage.setItem(row.key, JSON.stringify(row.value));
+      });
+      setSyncStatus('ok');
+      setLastSync(new Date().toLocaleTimeString('fr-FR'));
+      setTimeout(() => { setSyncStatus('idle'); window.location.reload(); }, 800);
+    } catch {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
 
   const handleExport = () => {
     const data: Record<string, unknown> = {};
     CONTENT_KEYS.forEach((k) => {
       const val = localStorage.getItem(k);
-      if (val) {
-        try { data[k] = JSON.parse(val); } catch { data[k] = val; }
-      }
+      if (val) { try { data[k] = JSON.parse(val); } catch { data[k] = val; } }
     });
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -258,48 +317,95 @@ function SyncPanel() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string) as Record<string, unknown>;
-        Object.entries(data).forEach(([k, v]) => {
-          if (CONTENT_KEYS.includes(k)) {
-            localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
-          }
-        });
+        for (const [k, v] of Object.entries(data)) {
+          if (!CONTENT_KEYS.includes(k)) continue;
+          localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+          if (supabase) await supabase.from('content').upsert({ key: k, value: v, updated_at: new Date().toISOString() });
+        }
         setImported(true);
         setTimeout(() => window.location.reload(), 800);
       } catch {
-        alert('Fichier invalide — vérifie qu\'il s\'agit d\'un export Hamache.');
+        alert("Fichier invalide.");
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   };
 
+  const statusColor = syncStatus === 'ok' ? 'text-green-400' : syncStatus === 'error' ? 'text-red-400' : syncStatus === 'syncing' ? 'text-secondary animate-pulse' : '';
+
   return (
     <div className="border border-white/5 rounded p-3 space-y-3">
-      <p className="text-[9px] uppercase tracking-widest text-secondary font-bold">Sync contenu</p>
-      <p className="text-[9px] text-[#f2e9e1]/30 leading-relaxed">
-        Exporte le contenu depuis cette version, importe-le sur l'autre pour synchroniser les deux.
-      </p>
-      <div className="flex gap-2">
-        <button
-          onClick={handleExport}
-          className="flex-1 py-2 bg-secondary/15 border border-secondary/30 text-secondary text-[9px] uppercase tracking-widest font-bold rounded hover:bg-secondary/25 transition-colors flex items-center justify-center gap-1.5"
-        >
-          <Database className="w-3 h-3" />
-          Exporter
+      {/* Statut connexion */}
+      <div className="flex items-center justify-between">
+        <p className="text-[9px] uppercase tracking-widest text-secondary font-bold">Supabase Sync</p>
+        <div className="flex items-center gap-1.5">
+          {connected === null ? (
+            <span className="text-[8px] text-[#f2e9e1]/30">Vérification…</span>
+          ) : connected ? (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+              <span className="text-[8px] text-green-400 font-mono">{cloudKeys.length} pages en cloud</span>
+            </>
+          ) : (
+            <>
+              <CloudOff className="w-3 h-3 text-red-400" />
+              <span className="text-[8px] text-red-400">Non connecté</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Pages en cloud */}
+      {connected && cloudKeys.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {CONTENT_KEYS.map((k) => (
+            <span key={k} className={`text-[7px] font-mono px-1.5 py-0.5 rounded border ${cloudKeys.includes(k) ? 'border-green-700/40 text-green-400/70 bg-green-900/10' : 'border-white/5 text-[#f2e9e1]/20'}`}>
+              {k.replace('page_', '')}
+              {cloudKeys.includes(k) ? ' ✓' : ' —'}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Boutons sync cloud */}
+      {connected && (
+        <div className="flex gap-2">
+          <button
+            onClick={handlePushToCloud}
+            disabled={syncStatus === 'syncing'}
+            className="flex-1 py-2 bg-secondary/15 border border-secondary/30 text-secondary text-[8px] uppercase tracking-widest font-bold rounded hover:bg-secondary/25 disabled:opacity-40 transition-colors flex items-center justify-center gap-1"
+          >
+            <RefreshCw className={`w-2.5 h-2.5 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
+            <span className={statusColor || 'text-secondary'}>
+              {syncStatus === 'syncing' ? 'Sync…' : syncStatus === 'ok' ? 'Envoyé ✓' : syncStatus === 'error' ? 'Erreur' : 'Desktop → Cloud'}
+            </span>
+          </button>
+          <button
+            onClick={handlePullFromCloud}
+            disabled={syncStatus === 'syncing'}
+            className="flex-1 py-2 bg-white/5 border border-white/10 text-[#f2e9e1]/50 text-[8px] uppercase tracking-widest font-bold rounded hover:border-secondary/30 hover:text-secondary disabled:opacity-40 transition-colors flex items-center justify-center gap-1"
+          >
+            <Zap className="w-2.5 h-2.5" />
+            Cloud → Ici
+          </button>
+        </div>
+      )}
+
+      {lastSync && (
+        <p className="text-[8px] text-[#f2e9e1]/25 font-mono">Dernière sync : {lastSync}</p>
+      )}
+
+      {/* Export / Import fichier */}
+      <div className="border-t border-white/5 pt-3 flex gap-2">
+        <button onClick={handleExport} className="flex-1 py-1.5 border border-white/8 text-[#f2e9e1]/30 text-[7px] uppercase tracking-widest rounded hover:text-secondary hover:border-secondary/20 transition-colors flex items-center justify-center gap-1">
+          <Database className="w-2.5 h-2.5" />Exporter JSON
         </button>
-        <button
-          onClick={() => fileRef.current?.click()}
-          className={`flex-1 py-2 border text-[9px] uppercase tracking-widest font-bold rounded transition-colors flex items-center justify-center gap-1.5 ${
-            imported
-              ? 'bg-green-800/40 border-green-600/40 text-green-400'
-              : 'bg-white/5 border-white/10 text-[#f2e9e1]/50 hover:border-secondary/30 hover:text-secondary'
-          }`}
-        >
-          <Zap className="w-3 h-3" />
-          {imported ? 'Importé ✓' : 'Importer'}
+        <button onClick={() => fileRef.current?.click()} className={`flex-1 py-1.5 border text-[7px] uppercase tracking-widest rounded transition-colors flex items-center justify-center gap-1 ${imported ? 'border-green-700/40 text-green-400' : 'border-white/8 text-[#f2e9e1]/30 hover:text-secondary hover:border-secondary/20'}`}>
+          <Zap className="w-2.5 h-2.5" />{imported ? 'Importé ✓' : 'Importer JSON'}
         </button>
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       </div>
