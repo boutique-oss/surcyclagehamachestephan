@@ -45,5 +45,20 @@ export function useContent<T extends object>(key: string, defaultValue: T): [T, 
     localStorage.setItem(key, JSON.stringify(content));
   }, [key, content]);
 
+  // Sync changes across tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === key && e.newValue) {
+        try {
+          const newVal = JSON.parse(e.newValue);
+          setContent({ ...defaultValue, ...newVal } as T);
+        } catch {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [key, defaultValue]);
+
   return [content, updateContent];
 }
