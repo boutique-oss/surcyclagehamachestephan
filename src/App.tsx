@@ -19,11 +19,11 @@ const NAV_LINKS = [
   { to: '/plan', label: 'Plan A3', full: '03. Plan A3', icon: Map },
 ];
 
-/* ── Liquid glass blobs (fixed, full-screen overlay) ── */
+/* ── Warm editorial blobs ── */
 function LiquidBackground() {
   return (
     <div aria-hidden className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-      {/* Blob 1 — vert primaire, coin haut-gauche */}
+      {/* Blob 1 — vert forêt, coin haut-gauche, très discret */}
       <div
         className="liquid-blob"
         style={{
@@ -32,77 +32,77 @@ function LiquidBackground() {
           top: '-200px',
           left: '-200px',
           background:
-            'radial-gradient(circle at 40% 40%, rgba(45,80,22,0.55) 0%, rgba(45,80,22,0.2) 45%, transparent 70%)',
-          filter: 'blur(90px)',
-          animation: 'liquid-blob-1 22s ease-in-out infinite',
-          opacity: 0.45,
-        }}
-      />
-
-      {/* Blob 2 — doré secondaire, coin bas-droit */}
-      <div
-        className="liquid-blob"
-        style={{
-          width: '580px',
-          height: '580px',
-          bottom: '-150px',
-          right: '-150px',
-          background:
-            'radial-gradient(circle at 55% 55%, rgba(212,165,116,0.5) 0%, rgba(212,165,116,0.18) 45%, transparent 70%)',
-          filter: 'blur(80px)',
-          animation: 'liquid-blob-2 28s ease-in-out infinite',
-          opacity: 0.38,
-        }}
-      />
-
-      {/* Blob 3 — accent brun, centre */}
-      <div
-        className="liquid-blob"
-        style={{
-          width: '420px',
-          height: '420px',
-          top: '35%',
-          left: '38%',
-          background:
-            'radial-gradient(circle at 50% 50%, rgba(139,90,60,0.45) 0%, rgba(139,90,60,0.12) 45%, transparent 70%)',
-          filter: 'blur(70px)',
-          animation: 'liquid-blob-3 19s ease-in-out infinite reverse',
+            'radial-gradient(circle at 40% 40%, rgba(45,80,22,0.4) 0%, rgba(45,80,22,0.12) 50%, transparent 70%)',
+          filter: 'blur(100px)',
+          animation: 'liquid-blob-1 26s ease-in-out infinite',
           opacity: 0.28,
         }}
       />
 
-      {/* Blob 4 — vert doux, coin haut-droit */}
+      {/* Blob 2 — ambre chaud, coin bas-droit, dominant */}
       <div
         className="liquid-blob"
         style={{
-          width: '350px',
-          height: '350px',
-          top: '-60px',
-          right: '10%',
+          width: '640px',
+          height: '640px',
+          bottom: '-160px',
+          right: '-160px',
           background:
-            'radial-gradient(circle at 50% 50%, rgba(45,80,22,0.4) 0%, rgba(45,80,22,0.1) 50%, transparent 70%)',
-          filter: 'blur(65px)',
-          animation: 'liquid-blob-1 16s ease-in-out infinite 4s',
-          opacity: 0.22,
+            'radial-gradient(circle at 55% 55%, rgba(212,140,70,0.6) 0%, rgba(180,110,50,0.22) 45%, transparent 70%)',
+          filter: 'blur(80px)',
+          animation: 'liquid-blob-2 32s ease-in-out infinite',
+          opacity: 0.42,
         }}
       />
 
-      {/* Grille de points subtile */}
+      {/* Blob 3 — brun cuir, centre-droite */}
       <div
-        className="absolute inset-0"
+        className="liquid-blob"
         style={{
-          backgroundImage: 'radial-gradient(rgba(212,165,116,0.18) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-          opacity: 0.6,
+          width: '480px',
+          height: '480px',
+          top: '30%',
+          left: '40%',
+          background:
+            'radial-gradient(circle at 50% 50%, rgba(139,90,60,0.5) 0%, rgba(100,60,30,0.15) 45%, transparent 70%)',
+          filter: 'blur(75px)',
+          animation: 'liquid-blob-3 22s ease-in-out infinite reverse',
+          opacity: 0.34,
         }}
       />
 
-      {/* Vignette bords */}
+      {/* Blob 4 — or safran, coin haut-droit */}
+      <div
+        className="liquid-blob"
+        style={{
+          width: '380px',
+          height: '380px',
+          top: '-80px',
+          right: '8%',
+          background:
+            'radial-gradient(circle at 50% 50%, rgba(200,150,60,0.45) 0%, rgba(160,110,40,0.12) 50%, transparent 70%)',
+          filter: 'blur(70px)',
+          animation: 'liquid-blob-1 20s ease-in-out infinite 5s',
+          opacity: 0.28,
+        }}
+      />
+
+      {/* Grille de points — plus fine, ton chaud */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(180,130,70,0.12) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+          opacity: 0.5,
+        }}
+      />
+
+      {/* Vignette bords — fond brun profond */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(18,26,13,0.7) 100%)',
+            'radial-gradient(ellipse at 50% 50%, transparent 38%, rgba(8,5,2,0.75) 100%)',
         }}
       />
     </div>
@@ -113,31 +113,32 @@ function TopBar() {
   const location = useLocation();
   return (
     <nav
-      className="fixed top-0 w-full z-50 h-14 md:h-16 flex items-center justify-between px-4 md:px-10 border-b"
+      className="fixed top-0 w-full z-50 h-14 md:h-16 flex items-center justify-between px-4 md:px-12 border-b"
       style={{
-        background: 'rgba(18,26,13,0.7)',
-        backdropFilter: 'blur(24px) saturate(1.8)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-        borderBottomColor: 'rgba(212,165,116,0.18)',
-        boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 24px rgba(18,26,13,0.6)',
+        background: 'rgba(10,7,4,0.72)',
+        backdropFilter: 'blur(28px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+        borderBottomColor: 'rgba(212,165,116,0.14)',
+        boxShadow: '0 1px 0 rgba(255,220,150,0.03) inset, 0 4px 32px rgba(5,3,1,0.7)',
       }}
     >
       <Link to="/" className="flex items-center gap-3 group">
         <div
-          className="w-7 h-7 md:w-8 md:h-8 rounded-sm flex items-center justify-center font-bold text-background text-sm transition-all group-hover:scale-110"
+          className="w-7 h-7 md:w-8 md:h-8 rounded-[2px] flex items-center justify-center font-bold text-[#0d0a07] text-sm transition-all group-hover:scale-110"
           style={{
             background: 'linear-gradient(135deg, #d4a574 0%, #8b5a3c 100%)',
-            boxShadow: '0 0 16px rgba(212,165,116,0.4)',
+            boxShadow: '0 0 20px rgba(212,165,116,0.35)',
           }}
         >
           R
         </div>
-        <h1 className="text-base md:text-xl font-bold tracking-widest uppercase hidden sm:block">
-          Réception
-        </h1>
+        <div className="hidden sm:flex flex-col leading-none">
+          <span className="text-[8px] uppercase tracking-[0.35em] text-secondary/50 font-mono">Atelier Hamache</span>
+          <span className="text-sm md:text-base font-bold tracking-[0.15em] uppercase text-[#f0e6d3]">Réception</span>
+        </div>
       </Link>
 
-      <div className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-tighter">
+      <div className="hidden md:flex gap-10 text-[10px] font-semibold uppercase tracking-widest">
         {NAV_LINKS.map((link) => {
           const isActive = location.pathname === link.to;
           return (
@@ -147,11 +148,11 @@ function TopBar() {
               className={cn(
                 'transition-all pb-1 border-b flex items-center gap-2',
                 isActive
-                  ? 'text-secondary border-secondary'
-                  : 'text-[#f2e9e1] border-transparent hover:text-secondary opacity-60 hover:opacity-100'
+                  ? 'text-secondary border-secondary/70'
+                  : 'text-[#f0e6d3] border-transparent hover:text-secondary opacity-45 hover:opacity-100'
               )}
             >
-              <link.icon className="w-4 h-4" />
+              <link.icon className="w-3.5 h-3.5" />
               <span>{link.full}</span>
             </Link>
           );
@@ -167,10 +168,10 @@ function BottomNav() {
     <nav
       className="fixed bottom-0 w-full z-50 h-14 md:hidden flex items-center justify-around border-t"
       style={{
-        background: 'rgba(18,26,13,0.75)',
-        backdropFilter: 'blur(24px) saturate(1.8)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-        borderTopColor: 'rgba(212,165,116,0.15)',
+        background: 'rgba(10,7,4,0.8)',
+        backdropFilter: 'blur(28px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+        borderTopColor: 'rgba(212,165,116,0.12)',
       }}
     >
       {NAV_LINKS.map((link) => {
@@ -181,10 +182,10 @@ function BottomNav() {
             to={link.to}
             className={cn(
               'flex flex-col items-center gap-0.5 px-3 py-1 transition-all',
-              isActive ? 'text-secondary' : 'text-[#f2e9e1]/40 hover:text-secondary'
+              isActive ? 'text-secondary' : 'text-[#f0e6d3]/35 hover:text-secondary'
             )}
           >
-            <link.icon className={cn('w-5 h-5 transition-all', isActive && 'drop-shadow-[0_0_8px_rgba(212,165,116,0.8)]')} />
+            <link.icon className={cn('w-5 h-5 transition-all', isActive && 'drop-shadow-[0_0_10px_rgba(212,165,116,0.7)]')} />
             <span className="text-[8px] uppercase tracking-wide">{link.label}</span>
           </Link>
         );
@@ -197,7 +198,7 @@ export default function App() {
   return (
     <AdminProvider>
       <HashRouter>
-        <div className="min-h-screen bg-background text-[#f2e9e1] flex flex-col pt-14 md:pt-16 font-sans">
+        <div className="min-h-screen bg-background text-[#f0e6d3] flex flex-col pt-14 md:pt-16 font-sans">
           <LiquidBackground />
           <TopBar />
           <BottomNav />
