@@ -229,6 +229,84 @@ function getLoadTime(): string {
   return 'N/A';
 }
 
+// ─── Sync Export / Import ────────────────────────────────────────────────────
+
+const CONTENT_KEYS = ['page_home', 'page_gabarit', 'page_recette', 'page_plan'];
+
+function SyncPanel() {
+  const [imported, setImported] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = () => {
+    const data: Record<string, unknown> = {};
+    CONTENT_KEYS.forEach((k) => {
+      const val = localStorage.getItem(k);
+      if (val) {
+        try { data[k] = JSON.parse(val); } catch { data[k] = val; }
+      }
+    });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contenu-hamache-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string) as Record<string, unknown>;
+        Object.entries(data).forEach(([k, v]) => {
+          if (CONTENT_KEYS.includes(k)) {
+            localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+          }
+        });
+        setImported(true);
+        setTimeout(() => window.location.reload(), 800);
+      } catch {
+        alert('Fichier invalide — vérifie qu\'il s\'agit d\'un export Hamache.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  return (
+    <div className="border border-white/5 rounded p-3 space-y-3">
+      <p className="text-[9px] uppercase tracking-widest text-secondary font-bold">Sync contenu</p>
+      <p className="text-[9px] text-[#f2e9e1]/30 leading-relaxed">
+        Exporte le contenu depuis cette version, importe-le sur l'autre pour synchroniser les deux.
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={handleExport}
+          className="flex-1 py-2 bg-secondary/15 border border-secondary/30 text-secondary text-[9px] uppercase tracking-widest font-bold rounded hover:bg-secondary/25 transition-colors flex items-center justify-center gap-1.5"
+        >
+          <Database className="w-3 h-3" />
+          Exporter
+        </button>
+        <button
+          onClick={() => fileRef.current?.click()}
+          className={`flex-1 py-2 border text-[9px] uppercase tracking-widest font-bold rounded transition-colors flex items-center justify-center gap-1.5 ${
+            imported
+              ? 'bg-green-800/40 border-green-600/40 text-green-400'
+              : 'bg-white/5 border-white/10 text-[#f2e9e1]/50 hover:border-secondary/30 hover:text-secondary'
+          }`}
+        >
+          <Zap className="w-3 h-3" />
+          {imported ? 'Importé ✓' : 'Importer'}
+        </button>
+        <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+      </div>
+    </div>
+  );
+}
+
 function CopyHash() {
   const [pwd, setPwd] = useState('');
   const [hash, setHash] = useState('');
@@ -311,6 +389,7 @@ function TabSystem() {
 
   return (
     <div className="flex flex-col gap-4 px-3 py-3 overflow-y-auto h-full">
+      <SyncPanel />
       <div className="border border-white/5 rounded overflow-hidden">
         {rows.map(([label, value], i) => (
           <div key={i} className={`flex items-center justify-between px-3 py-2 text-[10px] ${i < rows.length - 1 ? 'border-b border-white/5' : ''}`}>
