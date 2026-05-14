@@ -34,10 +34,23 @@ export function Plan() {
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
   const pinchDist = useRef<number | null>(null);
-  // true sur iPhone/Android (pointer = doigt = coarse)
   const isMobile = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
 
-  const handleZoomIn = () => setScale(s => Math.min(s + 0.25, 3));
+  // Contraintes de drag calculées dynamiquement selon le scale
+  const [dragBounds, setDragBounds] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const extra = Math.max(0, scale - 1);
+    setDragBounds({
+      left:   -(el.offsetWidth  * extra / 2),
+      right:   (el.offsetWidth  * extra / 2),
+      top:    -(el.offsetHeight * extra / 2),
+      bottom:  (el.offsetHeight * extra / 2),
+    });
+  }, [scale]);
+
+  const handleZoomIn = () => setScale(s => Math.min(s + 0.25, 4));
   const handleZoomOut = () => setScale(s => Math.max(s - 0.25, 0.5));
   const handleReset = () => {
     setScale(1);
@@ -185,7 +198,7 @@ export function Plan() {
           /* ── Mobile fullscreen : image seule, sans cadre ni annotations ── */
           <motion.div
             drag
-            dragConstraints={containerRef}
+            dragConstraints={dragBounds}
             animate={controls}
             style={{ scale, width: '100%', height: '100%' }}
             className="flex items-center justify-center origin-center"
@@ -201,7 +214,7 @@ export function Plan() {
           /* ── Normal / desktop fullscreen : cadre + annotations ── */
           <motion.div
             drag
-            dragConstraints={containerRef}
+            dragConstraints={dragBounds}
             animate={controls}
             style={{ scale }}
             className="w-full h-full flex items-center justify-center origin-center"
