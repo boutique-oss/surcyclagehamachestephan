@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
 import { Save, Pencil } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAdmin } from '../context/AdminContext';
 import { EditableText, EditableImage } from '../components/Editable';
+import { useContent } from '../lib/useContent';
 
 interface MousseRecette {
   id: string;
@@ -16,43 +16,47 @@ interface MousseRecette {
   usage: string;
 }
 
-const defaultRecettes: MousseRecette[] = [
-  {
-    id: "mousse-1",
-    nom: "Mousse Haute Résilience",
-    type: "HR 35 kg/m³",
-    image: "https://images.unsplash.com/photo-1558611997-7687bb3365ba?q=80&w=800&auto=format&fit=crop",
-    ingredients: "Chutes de mousse HR 35 kg/m³, polyol recyclé, liant naturel.",
-    technique: "Déchiquetage manuel des chutes, calibrage par densité. Pressage en moule avec liant, séchage à plat 24 h. Découpe à la scie à ruban selon gabarit.",
-    epaisseur: "80 mm",
-    densite: "35 kg/m³",
-    usage: "Assise principale",
-  },
-  {
-    id: "mousse-2",
-    nom: "Mousse Recyclée Copeaux",
-    type: "Copeaux HR 40 kg/m³",
-    image: "https://images.unsplash.com/photo-1616464916356-3a4082e077fc?q=80&w=800&auto=format&fit=crop",
-    ingredients: "Copeaux de mousse HR 40 kg/m³, toile de coton non traité, fil de surpiqûre.",
-    technique: "Tri et nettoyage des copeaux. Remplissage homogène dans housse coton. Fermeture à la machine, mise en forme manuelle, contrôle densité à la pression.",
-    epaisseur: "60 mm",
-    densite: "40 kg/m³",
-    usage: "Rembourrage dossier",
-  },
-  {
-    id: "mousse-3",
-    nom: "Mousse Mémoire de Forme",
-    type: "Visco 50 kg/m³",
-    image: "https://images.unsplash.com/photo-1540340061722-9293d5163008?q=80&w=800&auto=format&fit=crop",
-    ingredients: "Chutes visco-élastique 50 kg/m³, colle néoprène, enveloppe coton recyclé.",
-    technique: "Stratification par couches alternées visco/HR. Encollage néoprène entre couches. Couture de maintien périphérique. Finition par surpiqûre visible cognac.",
-    epaisseur: "25 mm",
-    densite: "50 kg/m³",
-    usage: "Confort appuie-tête",
-  },
-];
+interface RecettesContent {
+  recettes: MousseRecette[];
+}
 
-const STORAGE_KEY = 'recettes_mousses_v2';
+const defaultContent: RecettesContent = {
+  recettes: [
+    {
+      id: "mousse-1",
+      nom: "Mousse Haute Résilience",
+      type: "HR 35 kg/m³",
+      image: "https://images.unsplash.com/photo-1558611997-7687bb3365ba?q=80&w=800&auto=format&fit=crop",
+      ingredients: "Chutes de mousse HR 35 kg/m³, polyol recyclé, liant naturel.",
+      technique: "Déchiquetage manuel des chutes, calibrage par densité. Pressage en moule avec liant, séchage à plat 24 h. Découpe à la scie à ruban selon gabarit.",
+      epaisseur: "80 mm",
+      densite: "35 kg/m³",
+      usage: "Assise principale",
+    },
+    {
+      id: "mousse-2",
+      nom: "Mousse Recyclée Copeaux",
+      type: "Copeaux HR 40 kg/m³",
+      image: "https://images.unsplash.com/photo-1616464916356-3a4082e077fc?q=80&w=800&auto=format&fit=crop",
+      ingredients: "Copeaux de mousse HR 40 kg/m³, toile de coton non traité, fil de surpiqûre.",
+      technique: "Tri et nettoyage des copeaux. Remplissage homogène dans housse coton. Fermeture à la machine, mise en forme manuelle, contrôle densité à la pression.",
+      epaisseur: "60 mm",
+      densite: "40 kg/m³",
+      usage: "Rembourrage dossier",
+    },
+    {
+      id: "mousse-3",
+      nom: "Mousse Mémoire de Forme",
+      type: "Visco 50 kg/m³",
+      image: "https://images.unsplash.com/photo-1540340061722-9293d5163008?q=80&w=800&auto=format&fit=crop",
+      ingredients: "Chutes visco-élastique 50 kg/m³, colle néoprène, enveloppe coton recyclé.",
+      technique: "Stratification par couches alternées visco/HR. Encollage néoprène entre couches. Couture de maintien périphérique. Finition par surpiqûre visible cognac.",
+      epaisseur: "25 mm",
+      densite: "50 kg/m³",
+      usage: "Confort appuie-tête",
+    },
+  ],
+};
 
 const VOLET_COLORS = [
   { border: 'border-l-secondary', badge: 'bg-secondary text-background', label: 'text-secondary', num: 'text-secondary' },
@@ -62,40 +66,17 @@ const VOLET_COLORS = [
 
 export function Recette() {
   const { isEditMode, toggleEditMode } = useAdmin();
-  const [recettes, setRecettes] = useState<MousseRecette[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : defaultRecettes;
-    } catch {
-      return defaultRecettes;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(recettes));
-  }, [recettes]);
-
-  // Sync changes across tabs/windows
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const newVal = JSON.parse(e.newValue);
-          setRecettes(newVal);
-        } catch {}
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const [content, setContent] = useContent<RecettesContent>('page_recette', defaultContent);
+  const recettes = content.recettes;
 
   const updateRecette = (id: string, field: keyof MousseRecette, value: string) => {
-    setRecettes(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+    setContent({
+      ...content,
+      recettes: recettes.map(r => r.id === id ? { ...r, [field]: value } : r),
+    });
   };
 
   const handleSave = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(recettes));
     toggleEditMode();
   };
 
