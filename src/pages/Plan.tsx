@@ -33,6 +33,7 @@ export function Plan() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
+  const pinchDist = useRef<number | null>(null);
 
   const handleZoomIn = () => setScale(s => Math.min(s + 0.25, 3));
   const handleZoomOut = () => setScale(s => Math.max(s - 0.25, 0.5));
@@ -41,32 +42,63 @@ export function Plan() {
     controls.start({ x: 0, y: 0 });
   };
 
+  const exitFullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    setIsFullscreen(false);
+  };
+
   const toggleFullscreen = async () => {
     if (isFullscreen) {
-      if (document.fullscreenElement) document.exitFullscreen();
-      setIsFullscreen(false);
+      exitFullscreen();
     } else {
       setIsFullscreen(true);
       try {
         await containerRef.current?.requestFullscreen();
       } catch {
-        // CSS fullscreen déjà appliqué — fallback mobile/iOS
+        // CSS fullscreen appliqué — fallback iOS
       }
     }
   };
 
+  // Pinch-to-zoom mobile + ESC + fullscreenchange
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) setIsFullscreen(false);
+    const el = containerRef.current;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        pinchDist.current = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
     };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsFullscreen(false);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && pinchDist.current !== null) {
+        e.preventDefault();
+        const d = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        setScale(s => Math.min(Math.max(s * (d / pinchDist.current!), 0.5), 3));
+        pinchDist.current = d;
+      }
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('keydown', handleKeyDown);
+    const onTouchEnd = () => { pinchDist.current = null; };
+
+    const onFullscreenChange = () => { if (!document.fullscreenElement) setIsFullscreen(false); };
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsFullscreen(false); };
+
+    el?.addEventListener('touchstart', onTouchStart, { passive: false });
+    el?.addEventListener('touchmove', onTouchMove, { passive: false });
+    el?.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('keydown', handleKeyDown);
+      el?.removeEventListener('touchstart', onTouchStart);
+      el?.removeEventListener('touchmove', onTouchMove);
+      el?.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, []);
 
@@ -126,13 +158,20 @@ export function Plan() {
             ? "fixed inset-0 z-[9999] border-none flex items-center justify-center"
             : "flex-1"
         )}
-        style={{ cursor: 'grab' }}
+        style={{
+          cursor: 'grab',
+          ...(isFullscreen ? {
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          } : {}),
+        }}
       >
-        {/* Bouton fermer — visible uniquement en fullscreen CSS mobile */}
+        {/* Bouton fermer — desktop + mobile */}
         {isFullscreen && (
           <button
-            onClick={() => setIsFullscreen(false)}
-            className="absolute top-4 right-4 z-10 bg-background/80 backdrop-blur-sm text-secondary border border-secondary/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-secondary hover:text-background transition-colors"
+            onClick={exitFullscreen}
+            className="absolute right-4 z-10 bg-background/80 backdrop-blur-sm text-secondary border border-secondary/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-secondary hover:text-background transition-colors"
+            style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
           >
             ✕ Fermer
           </button>
