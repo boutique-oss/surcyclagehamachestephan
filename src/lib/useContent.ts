@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from './supabase';
 
 function logChange<T>(key: string, oldVal: T, newVal: T) {
   if (JSON.stringify(oldVal) === JSON.stringify(newVal)) return;
@@ -20,14 +21,36 @@ function logChange<T>(key: string, oldVal: T, newVal: T) {
   } catch {}
 }
 
+async function fetchFromCloud<T>(key: string): Promise<T | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('content')
+      .select('value')
+      .eq('key', key)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.value as T;
+  } catch {
+    return null;
+  }
+}
+
+async function saveToCloud<T>(key: string, value: T): Promise<void> {
+  if (!supabase) return;
+  try {
+    await supabase
+      .from('content')
+      .upsert({ key, value, updated_at: new Date().toISOString() });
+  } catch {}
+}
+
 export function useContent<T extends object>(key: string, defaultValue: T): [T, (val: T) => void] {
   const [content, setContent] = useState<T>(() => {
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Merge with defaultValue so any newly-added fields are always present,
-        // even when the user has an older version saved in localStorage.
         return { ...defaultValue, ...parsed } as T;
       } catch {
         return defaultValue;
@@ -36,29 +59,47 @@ export function useContent<T extends object>(key: string, defaultValue: T): [T, 
     return defaultValue;
   });
 
+  // Charge depuis Supabase au montage + écoute les changements temps réel
+  useEffect(() => {
+    let active = true;
+
+    fetchFromCloud<T>(key).then((cloud) => {
+      if (!active || !cloud) return;
+      const merged = { ...defaultValue, ...cloud } as T;
+      setContent(merged);
+      localStorage.setItem(key, JSON.stringify(merged));
+    });
+
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel(`content:${key}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content', filter: `key=eq.${key}` },
+        (payload) => {
+          const rec = payload.new as { value?: T } | undefined;
+          if (!rec?.value) return;
+          const merged = { ...defaultValue, ...rec.value } as T;
+          setContent(merged);
+          localStorage.setItem(key, JSON.stringify(merged));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
   const updateContent = (newVal: T) => {
     logChange(key, content, newVal);
     setContent(newVal);
+    localStorage.setItem(key, JSON.stringify(newVal));
+    saveToCloud(key, newVal);
   };
-
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(content));
-  }, [key, content]);
-
-  // Sync changes across tabs/windows
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === key && e.newValue) {
-        try {
-          const newVal = JSON.parse(e.newValue);
-          setContent({ ...defaultValue, ...newVal } as T);
-        } catch {}
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [key, defaultValue]);
 
   return [content, updateContent];
 }
