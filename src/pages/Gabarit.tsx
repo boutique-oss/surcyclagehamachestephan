@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Leaf, Ruler, Weight, Camera } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ArrowRight, Leaf, Ruler, Weight, Camera, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useContent } from '../lib/useContent';
 import { EditableText, EditableImage } from '../components/Editable';
 import { useAdmin } from '../context/AdminContext';
@@ -36,6 +37,13 @@ const DEFAULT_GALLERY: GalleryPhoto[] = [
 
 export function Gabarit() {
   const { isEditMode } = useAdmin();
+  const [lightbox, setLightbox] = useState<GalleryPhoto | null>(null);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightbox(null); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
 
   const [content, setContent] = useContent('page_gabarit', {
     heroImage: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=1600&auto=format&fit=crop',
@@ -62,6 +70,36 @@ export function Gabarit() {
 
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col gap-5 md:gap-10 pb-6 md:pb-12 pt-3 md:pt-6">
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] bg-black/90 flex flex-col items-center justify-center p-4"
+            onClick={() => setLightbox(null)}
+          >
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+            >
+              <X className="w-7 h-7" />
+            </button>
+            <motion.img
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              src={lightbox.image}
+              alt={lightbox.caption}
+              className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="mt-4 text-[11px] text-white/60 font-serif text-center max-w-sm">{lightbox.caption}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -193,14 +231,23 @@ export function Gabarit() {
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 ) : (
-                  <img
-                    src={photo.image}
-                    alt={photo.caption}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover/photo:scale-105"
-                  />
+                  <button
+                    className="absolute inset-0 w-full h-full"
+                    onClick={() => setLightbox(photo)}
+                    aria-label={`Agrandir : ${photo.caption}`}
+                  >
+                    <img
+                      src={photo.image}
+                      alt={photo.caption}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover/photo:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover/photo:bg-black/20 transition-colors flex items-center justify-center">
+                      <Camera className="w-6 h-6 text-white opacity-0 group-hover/photo:opacity-80 transition-opacity drop-shadow" />
+                    </div>
+                  </button>
                 )}
                 {/* Numéro */}
-                <div className="absolute top-2 left-2 bg-background/70 backdrop-blur-sm text-secondary text-[9px] font-bold px-1.5 py-0.5 rounded-sm font-mono">
+                <div className="absolute top-2 left-2 bg-background/70 backdrop-blur-sm text-secondary text-[9px] font-bold px-1.5 py-0.5 rounded-sm font-mono pointer-events-none">
                   {String(idx + 1).padStart(2, '0')}
                 </div>
               </div>

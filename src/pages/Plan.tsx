@@ -41,22 +41,33 @@ export function Plan() {
     controls.start({ x: 0, y: 0 });
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
+  const toggleFullscreen = async () => {
+    if (isFullscreen) {
+      if (document.fullscreenElement) document.exitFullscreen();
       setIsFullscreen(false);
+    } else {
+      setIsFullscreen(true);
+      try {
+        await containerRef.current?.requestFullscreen();
+      } catch {
+        // CSS fullscreen déjà appliqué — fallback mobile/iOS
+      }
     }
   };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      if (!document.fullscreenElement) setIsFullscreen(false);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleDownload = () => {
@@ -110,11 +121,22 @@ export function Plan() {
       <div
         ref={containerRef}
         className={cn(
-          "relative flex-1 bg-[#121a0d] border border-primary shadow-glow-primary overflow-hidden",
-          isFullscreen ? "border-none" : ""
+          "relative bg-[#121a0d] border border-primary shadow-glow-primary overflow-hidden",
+          isFullscreen
+            ? "fixed inset-0 z-[9999] border-none flex items-center justify-center"
+            : "flex-1"
         )}
         style={{ cursor: 'grab' }}
       >
+        {/* Bouton fermer — visible uniquement en fullscreen CSS mobile */}
+        {isFullscreen && (
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 z-10 bg-background/80 backdrop-blur-sm text-secondary border border-secondary/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-secondary hover:text-background transition-colors"
+          >
+            ✕ Fermer
+          </button>
+        )}
         <motion.div
           drag
           dragConstraints={containerRef}
