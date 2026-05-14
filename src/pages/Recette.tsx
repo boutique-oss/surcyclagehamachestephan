@@ -75,6 +75,21 @@ export function Recette() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(recettes));
   }, [recettes]);
 
+  // Sync changes across tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const newVal = JSON.parse(e.newValue);
+          setRecettes(newVal);
+        } catch {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const updateRecette = (id: string, field: keyof MousseRecette, value: string) => {
     setRecettes(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
   };
