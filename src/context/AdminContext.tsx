@@ -23,7 +23,7 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 // Défini à la compilation via VITE_ADMIN_HASH dans .env.local
 // Pour générer : dans la console navigateur → hashPwd('votre_mot_de_passe').then(console.log)
 const ADMIN_HASH: string =
-  (import.meta.env.VITE_ADMIN_HASH as string | undefined) ??
+  (import.meta.env.VITE_ADMIN_HASH || undefined) ??
   'f9a08fb80b89de612e9ce8cffbd695c8eb7b61b2c634b99322ce5095993afcde';
 
 const MAX_ATTEMPTS = 5;
