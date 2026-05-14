@@ -27,7 +27,7 @@ const ADMIN_HASH: string =
   'f9a08fb80b89de612e9ce8cffbd695c8eb7b61b2c634b99322ce5095993afcde';
 
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 1000; // temp — reset lockout
+const LOCKOUT_MS = 30 * 60 * 1000;
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 // Clé obfusquée — rend la manipulation manuelle moins évidente
