@@ -136,11 +136,31 @@ export function Gabarit() {
           <span className="text-[10px] text-[#f2e9e1] opacity-40 uppercase tracking-widest">Plan coté</span>
         </div>
 
+        {isEditMode && (
+          <div className="flex gap-2 items-center">
+            <input
+              type="text"
+              value={content.gabaritImage}
+              onChange={e => setContent({ ...content, gabaritImage: e.target.value })}
+              placeholder="https://… URL de l'image gabarit"
+              className="flex-1 bg-[#0d1309] border border-primary text-xs text-[#f2e9e1] px-3 py-2 rounded focus:outline-none focus:border-secondary transition-colors font-mono"
+            />
+            {content.gabaritImage && (
+              <button
+                onClick={() => setContent({ ...content, gabaritImage: '' })}
+                className="text-[#f2e9e1]/30 hover:text-red-400 transition-colors text-[10px] uppercase tracking-widest px-2"
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="relative w-full rounded-xl overflow-hidden border border-secondary/20 bg-[#0a100a] min-h-[180px]">
-          {(content.gabaritImage || isEditMode) ? (
-            <EditableImage
+          {content.gabaritImage ? (
+            <img
               src={content.gabaritImage}
-              onChange={(val) => setContent({ ...content, gabaritImage: val })}
+              alt="Vue gabarit"
               className="w-full object-contain max-h-[70vh]"
             />
           ) : (

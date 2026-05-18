@@ -134,14 +134,30 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
           <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-accent">ZIP téléchargeable (public)</h3>
         </div>
 
-        {zipUrl ? (
-          <div className="flex items-center gap-2 text-[10px] text-secondary font-mono break-all bg-black/20 rounded px-3 py-2">
-            <CheckCircle className="w-3 h-3 flex-shrink-0 text-secondary" />
-            {zipUrl}
-          </div>
-        ) : (
-          <p className="text-[10px] text-[#f2e9e1]/50 italic">Aucun ZIP défini — uploadez un fichier .zip ci-dessous.</p>
-        )}
+        {/* Champ URL direct */}
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            value={zipUrl}
+            onChange={e => onZipUrlChange(e.target.value)}
+            placeholder="https://… URL Supabase du .zip"
+            className="flex-1 bg-[#0d1309] border border-primary text-[10px] text-[#f2e9e1] px-3 py-2 rounded focus:outline-none focus:border-accent transition-colors font-mono"
+          />
+          {zipUrl && (
+            <button
+              onClick={() => onZipUrlChange('')}
+              className="text-[#f2e9e1]/30 hover:text-red-400 transition-colors text-[9px] uppercase tracking-widest flex-shrink-0 px-2"
+            >
+              Effacer
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-primary/40" />
+          <span className="text-[9px] text-[#f2e9e1]/30 uppercase tracking-widest">ou uploader</span>
+          <div className="flex-1 h-px bg-primary/40" />
+        </div>
 
         <div className="flex gap-2 items-center">
           <button
