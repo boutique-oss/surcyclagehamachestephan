@@ -28,9 +28,8 @@ function formatSize(bytes: number) {
 }
 
 async function ensureBucket() {
-  const { error } = await supabase.storage.createBucket(BUCKET, { public: true });
-  // ignore "already exists" error
-  if (error && !error.message.includes('already exists')) throw error;
+  // tentative silencieuse — le bucket doit exister dans le dashboard Supabase
+  await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {});
 }
 
 export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManagerProps) {
@@ -52,7 +51,6 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
   async function loadFiles() {
     setLoading(true);
     try {
-      await ensureBucket();
       const { data, error } = await supabase.storage.from(BUCKET).list(PDF_PREFIX, { limit: 100 });
       if (error) throw error;
       const files: StoredFile[] = (data ?? [])
