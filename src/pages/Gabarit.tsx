@@ -1,49 +1,13 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Leaf, Ruler, Weight, Camera, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { ArrowRight, Leaf, Ruler, Weight, Download, Archive, FolderOpen } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useContent } from '../lib/useContent';
 import { EditableText, EditableImage } from '../components/Editable';
 import { useAdmin } from '../context/AdminContext';
-
-interface GalleryPhoto {
-  id: string;
-  image: string;
-  caption: string;
-}
-
-const DEFAULT_GALLERY: GalleryPhoto[] = [
-  {
-    id: 'g1',
-    image: 'https://images.unsplash.com/photo-1540340061722-9293d5163008?q=80&w=800&auto=format&fit=crop',
-    caption: 'Structure bois brut — chêne massif avant corroyage.',
-  },
-  {
-    id: 'g2',
-    image: 'https://images.unsplash.com/photo-1505069411475-7164b15dedea?q=80&w=800&auto=format&fit=crop',
-    caption: 'Usinage des tenons et mortaises à la défonceuse.',
-  },
-  {
-    id: 'g3',
-    image: 'https://images.unsplash.com/photo-1558611997-7687bb3365ba?q=80&w=800&auto=format&fit=crop',
-    caption: 'Copeaux de mousse HR 40 kg/m³ calibrés et triés.',
-  },
-  {
-    id: 'g4',
-    image: 'https://images.unsplash.com/photo-1616464916356-3a4082e077fc?q=80&w=800&auto=format&fit=crop',
-    caption: 'Capitonnage final — surpiqûres cognac apparentes.',
-  },
-];
+import { GabaritFileManager } from '../components/GabaritFileManager';
 
 export function Gabarit() {
   const { isEditMode } = useAdmin();
-  const [lightbox, setLightbox] = useState<GalleryPhoto | null>(null);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightbox(null); };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, []);
 
   const [content, setContent] = useContent('page_gabarit', {
     heroImage: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=1600&auto=format&fit=crop',
@@ -56,51 +20,14 @@ export function Gabarit() {
     specsDimDesc: 'H. 90cm • Assise 42cm',
     specsWeight: '18.5',
     specsFinishes: 'Huile de lin naturelle (bois), Surpiqûres cognac apparentes.',
-    gallery: DEFAULT_GALLERY,
+    gabaritImage: '',
+    zipUrl: '',
   });
-
-  const updatePhoto = (id: string, field: keyof GalleryPhoto, value: string) => {
-    setContent({
-      ...content,
-      gallery: content.gallery.map((p: GalleryPhoto) =>
-        p.id === id ? { ...p, [field]: value } : p
-      ),
-    });
-  };
 
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col gap-5 md:gap-10 pb-6 md:pb-12 pt-3 md:pt-6">
 
-      {/* Lightbox */}
-      <AnimatePresence>
-        {lightbox && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/90 flex flex-col items-center justify-center p-4"
-            onClick={() => setLightbox(null)}
-          >
-            <button
-              onClick={() => setLightbox(null)}
-              className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-            >
-              <X className="w-7 h-7" />
-            </button>
-            <motion.img
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              src={lightbox.image}
-              alt={lightbox.caption}
-              className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <p className="mt-4 text-[11px] text-white/60 font-serif text-center max-w-sm">{lightbox.caption}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {/* Hero Section */}
+      {/* ── Hero ── */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -116,16 +43,16 @@ export function Gabarit() {
         <div className="absolute bottom-0 left-0 p-4 sm:p-6 md:p-10 w-full">
           <div className="text-[9px] md:text-[10px] uppercase text-secondary tracking-widest mb-1 md:mb-3">Preview : Vue d'ensemble</div>
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-widest uppercase mb-2 md:mb-4 text-[#f2e9e1] flex gap-2 md:gap-3 flex-wrap">
-            <EditableText value={content.title1} onChange={(val) => setContent({...content, title1: val})} />
-            <EditableText value={content.title2} onChange={(val) => setContent({...content, title2: val})} className="text-secondary font-normal" />
+            <EditableText value={content.title1} onChange={(val) => setContent({ ...content, title1: val })} />
+            <EditableText value={content.title2} onChange={(val) => setContent({ ...content, title2: val })} className="text-secondary font-normal" />
           </h1>
           <div className="text-xs md:text-base text-[#f2e9e1] opacity-80 max-w-2xl font-serif hidden sm:block">
-            <EditableText value={content.description} onChange={(val) => setContent({...content, description: val})} multiline />
+            <EditableText value={content.description} onChange={(val) => setContent({ ...content, description: val })} multiline />
           </div>
         </div>
       </motion.div>
 
-      {/* Specs + CTAs */}
+      {/* ── Specs + CTAs ── */}
       <div className="grid md:grid-cols-3 gap-3 md:gap-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -142,27 +69,27 @@ export function Gabarit() {
             <div className="flex flex-col gap-1">
               <span className="text-[9px] md:text-[10px] text-secondary uppercase tracking-widest flex items-center gap-1.5"><Leaf className="w-3 h-3" /> Matériaux</span>
               <div className="text-[10px] md:text-[11px] text-[#f2e9e1] leading-relaxed opacity-70 font-serif mt-1">
-                <EditableText value={content.specsMaterials} onChange={(val) => setContent({...content, specsMaterials: val})} multiline />
+                <EditableText value={content.specsMaterials} onChange={(val) => setContent({ ...content, specsMaterials: val })} multiline />
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
               <span className="text-[9px] md:text-[10px] text-secondary uppercase tracking-widest flex items-center gap-1.5"><Ruler className="w-3 h-3" /> Dimensions</span>
               <div className="text-2xl md:text-3xl font-light mt-1 flex items-baseline gap-1.5 md:gap-2">
-                <EditableText value={content.specsDimWidth} onChange={(val) => setContent({...content, specsDimWidth: val})} />
+                <EditableText value={content.specsDimWidth} onChange={(val) => setContent({ ...content, specsDimWidth: val })} />
                 <span className="text-xs text-secondary">x</span>
-                <EditableText value={content.specsDimDepth} onChange={(val) => setContent({...content, specsDimDepth: val})} />
+                <EditableText value={content.specsDimDepth} onChange={(val) => setContent({ ...content, specsDimDepth: val })} />
                 <span className="text-xs text-secondary">cm</span>
               </div>
               <div className="text-[9px] md:text-[10px] text-[#f2e9e1] opacity-50 uppercase tracking-wide mt-1">
-                <EditableText value={content.specsDimDesc} onChange={(val) => setContent({...content, specsDimDesc: val})} />
+                <EditableText value={content.specsDimDesc} onChange={(val) => setContent({ ...content, specsDimDesc: val })} />
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
               <span className="text-[9px] md:text-[10px] text-secondary uppercase tracking-widest flex items-center gap-1.5"><Weight className="w-3 h-3" /> Poids</span>
               <div className="text-2xl md:text-3xl font-light mt-1 flex items-baseline gap-1.5 md:gap-2">
-                <EditableText value={content.specsWeight} onChange={(val) => setContent({...content, specsWeight: val})} />
+                <EditableText value={content.specsWeight} onChange={(val) => setContent({ ...content, specsWeight: val })} />
                 <span className="text-xs text-secondary">kg</span>
               </div>
             </div>
@@ -170,13 +97,13 @@ export function Gabarit() {
             <div className="flex flex-col gap-1">
               <span className="text-[9px] md:text-[10px] text-secondary uppercase tracking-widest">Finitions</span>
               <div className="text-[10px] md:text-[11px] text-[#f2e9e1] leading-relaxed opacity-70 font-serif mt-1">
-                <EditableText value={content.specsFinishes} onChange={(val) => setContent({...content, specsFinishes: val})} multiline />
+                <EditableText value={content.specsFinishes} onChange={(val) => setContent({ ...content, specsFinishes: val })} multiline />
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* CTAs en ligne sur mobile */}
+        {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -197,79 +124,97 @@ export function Gabarit() {
         </motion.div>
       </div>
 
-      {/* ── Galerie photos + légendes ── */}
+      {/* ── Image gabarit (plan) ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="flex flex-col gap-3 md:gap-5"
+        className="flex flex-col gap-3"
       >
-        {/* En-tête galerie */}
         <div className="flex items-center gap-3 border-b border-primary pb-3">
-          <Camera className="w-4 h-4 text-secondary flex-shrink-0" />
-          <h2 className="text-xs md:text-sm uppercase tracking-[0.2em] font-bold text-secondary">Galerie</h2>
-          <span className="text-[10px] text-[#f2e9e1] opacity-40 uppercase tracking-widest">Documentation photographique</span>
+          <h2 className="text-xs md:text-sm uppercase tracking-[0.2em] font-bold text-secondary">Vue gabarit</h2>
+          <span className="text-[10px] text-[#f2e9e1] opacity-40 uppercase tracking-widest">Plan coté</span>
         </div>
 
-        {/* 2 colonnes mobile → 4 colonnes desktop, tout en ligne */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4">
-          {(content.gallery as GalleryPhoto[]).map((photo, idx) => (
-            <motion.div
-              key={photo.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 + idx * 0.07 }}
-              className="flex flex-col gap-0 group/photo"
-            >
-              {/* Image */}
-              <div className="relative aspect-[3/4] overflow-hidden rounded-t border border-secondary/20 border-b-0 bg-[#121a0d]">
-                {isEditMode ? (
-                  <EditableImage
-                    src={photo.image}
-                    alt={photo.caption}
-                    onChange={(val) => updatePhoto(photo.id, 'image', val)}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <button
-                    className="absolute inset-0 w-full h-full"
-                    onClick={() => setLightbox(photo)}
-                    aria-label={`Agrandir : ${photo.caption}`}
-                  >
-                    <img
-                      src={photo.image}
-                      alt={photo.caption}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover/photo:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover/photo:bg-black/20 transition-colors flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-white opacity-0 group-hover/photo:opacity-80 transition-opacity drop-shadow" />
-                    </div>
-                  </button>
-                )}
-                {/* Numéro */}
-                <div className="absolute top-2 left-2 bg-background/70 backdrop-blur-sm text-secondary text-[9px] font-bold px-1.5 py-0.5 rounded-sm font-mono pointer-events-none">
-                  {String(idx + 1).padStart(2, '0')}
-                </div>
+        <div className="relative w-full rounded-xl overflow-hidden border border-secondary/20 bg-[#0a100a] min-h-[180px]">
+          {(content.gabaritImage || isEditMode) ? (
+            <EditableImage
+              src={content.gabaritImage}
+              onChange={(val) => setContent({ ...content, gabaritImage: val })}
+              className="w-full object-contain max-h-[70vh]"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-[#f2e9e1]/20">
+              <div className="w-16 h-16 border-2 border-dashed border-[#f2e9e1]/10 rounded flex items-center justify-center">
+                <svg viewBox="0 0 64 64" className="w-8 h-8 opacity-30" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="8" y="12" width="48" height="40" rx="2" />
+                  <line x1="8" y1="24" x2="56" y2="24" />
+                  <line x1="8" y1="36" x2="56" y2="36" />
+                  <line x1="20" y1="12" x2="20" y2="52" />
+                </svg>
               </div>
-
-              {/* Légende */}
-              <div className="bg-[#121a0d]/80 border border-secondary/20 border-t border-t-secondary/40 rounded-b px-2 py-2 md:px-3 md:py-2.5">
-                <div className="text-[9px] md:text-[10px] text-[#f2e9e1]/80 font-serif leading-snug">
-                  {isEditMode ? (
-                    <EditableText
-                      value={photo.caption}
-                      onChange={(val) => updatePhoto(photo.id, 'caption', val)}
-                      multiline
-                    />
-                  ) : (
-                    photo.caption
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              <span className="text-[10px] uppercase tracking-widest">Image gabarit à venir</span>
+            </div>
+          )}
         </div>
       </motion.div>
+
+      {/* ── Téléchargement ZIP ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        {content.zipUrl ? (
+          <div className="glass-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-accent/30">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Archive className="w-4 h-4 text-accent flex-shrink-0" />
+                <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-accent">Gabarits à télécharger</h3>
+              </div>
+              <p className="text-[10px] text-[#f2e9e1]/50 font-serif pl-6">
+                Fichiers PDF côtés — impression A3 recommandée.
+              </p>
+            </div>
+            <a
+              href={content.zipUrl}
+              download
+              className="flex items-center gap-2 px-5 py-2.5 bg-accent/10 hover:bg-accent hover:text-[#f2e9e1] border border-accent text-accent text-[11px] uppercase tracking-widest font-bold rounded-lg transition-colors flex-shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              Télécharger .zip
+            </a>
+          </div>
+        ) : (
+          !isEditMode && (
+            <div className="glass-card flex items-center gap-3 border border-primary/20 opacity-40">
+              <Archive className="w-4 h-4 text-[#f2e9e1]/30" />
+              <span className="text-[10px] text-[#f2e9e1]/30 uppercase tracking-widest">Fichiers gabarits — bientôt disponibles</span>
+            </div>
+          )
+        )}
+      </motion.div>
+
+      {/* ── Gestionnaire admin (mode édition uniquement) ── */}
+      {isEditMode && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex flex-col gap-3"
+        >
+          <div className="flex items-center gap-3 border-b border-primary pb-3">
+            <FolderOpen className="w-4 h-4 text-secondary flex-shrink-0" />
+            <h2 className="text-xs md:text-sm uppercase tracking-[0.2em] font-bold text-secondary">Gestionnaire fichiers</h2>
+            <span className="text-[9px] bg-secondary/10 text-secondary border border-secondary/30 px-1.5 py-0.5 rounded uppercase tracking-widest">Admin</span>
+          </div>
+
+          <GabaritFileManager
+            zipUrl={content.zipUrl}
+            onZipUrlChange={(url) => setContent({ ...content, zipUrl: url })}
+          />
+        </motion.div>
+      )}
 
       <footer className="mt-auto text-center border-t border-primary pt-4 md:pt-6 flex justify-between text-[9px] uppercase tracking-widest text-secondary">
         <span>&copy; 2026 Atelier Réception</span>
