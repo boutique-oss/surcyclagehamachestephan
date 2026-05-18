@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, Trash2, Download, FileText, FolderOpen, Archive, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, Trash2, Download, FileText, FolderOpen, Archive, RefreshCw, CheckCircle, AlertCircle, Zap } from 'lucide-react';
+import JSZip from 'jszip';
 import { supabase } from '../lib/supabase';
 
 const BUCKET = 'gabarits';
@@ -37,6 +38,8 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
   const [loading, setLoading] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [uploadingZip, setUploadingZip] = useState(false);
+  const [generatingZip, setGeneratingZip] = useState(false);
+  const [generateProgress, setGenerateProgress] = useState('');
   const [msg, setMsg] = useState<Msg>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const zipInputRef = useRef<HTMLInputElement>(null);
@@ -109,6 +112,36 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
       flash('err', `Erreur upload ZIP : ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setUploadingZip(false);
+    }
+  }
+
+  async function generateZip() {
+    if (pdfs.length === 0) { flash('err', 'Aucun PDF à zipper — uploadez d\'abord des fichiers.'); return; }
+    setGeneratingZip(true);
+    try {
+      const zip = new JSZip();
+      for (let i = 0; i < pdfs.length; i++) {
+        const f = pdfs[i];
+        setGenerateProgress(`Téléchargement ${i + 1}/${pdfs.length} — ${f.name}`);
+        const res = await fetch(f.publicUrl);
+        if (!res.ok) throw new Error(`Impossible de télécharger ${f.name}`);
+        const buf = await res.arrayBuffer();
+        zip.file(f.name, buf);
+      }
+      setGenerateProgress('Compression en cours…');
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      setGenerateProgress('Upload du ZIP…');
+      const path = `${ZIP_PREFIX}gabarits.zip`;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, blob, { upsert: true, contentType: 'application/zip' });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      onZipUrlChange(urlData.publicUrl);
+      flash('ok', `ZIP généré (${pdfs.length} PDF${pdfs.length > 1 ? 's' : ''}) et lien public mis à jour.`);
+    } catch (e: unknown) {
+      flash('err', `Erreur génération ZIP : ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setGeneratingZip(false);
+      setGenerateProgress('');
     }
   }
 
@@ -229,6 +262,25 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
               </li>
             ))}
           </ul>
+        )}
+
+        {/* Générer ZIP */}
+        {pdfs.length > 0 && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-primary/30">
+            <button
+              onClick={generateZip}
+              disabled={generatingZip}
+              className="flex items-center gap-2 px-3 py-2 text-[10px] uppercase tracking-widest font-bold border border-accent text-accent hover:bg-accent hover:text-[#f2e9e1] transition-colors rounded disabled:opacity-50"
+            >
+              {generatingZip
+                ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                : <Zap className="w-3.5 h-3.5" />}
+              Générer ZIP depuis les PDFs ({pdfs.length})
+            </button>
+            {generatingZip && generateProgress && (
+              <p className="text-[9px] text-[#f2e9e1]/40 font-mono px-1">{generateProgress}</p>
+            )}
+          </div>
         )}
 
         {/* Upload PDF */}
