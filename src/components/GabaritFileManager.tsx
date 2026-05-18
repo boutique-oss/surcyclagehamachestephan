@@ -232,7 +232,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
             multiple
             className="hidden"
             onChange={e => {
-              const files = Array.from(e.target.files ?? []);
+              const files: File[] = Array.from(e.target.files ?? []);
               files.forEach(f => uploadPdf(f));
               e.target.value = '';
             }}
