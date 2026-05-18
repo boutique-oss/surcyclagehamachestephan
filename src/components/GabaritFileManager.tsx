@@ -123,10 +123,9 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
       for (let i = 0; i < pdfs.length; i++) {
         const f = pdfs[i];
         setGenerateProgress(`Téléchargement ${i + 1}/${pdfs.length} — ${f.name}`);
-        const res = await fetch(f.publicUrl);
-        if (!res.ok) throw new Error(`Impossible de télécharger ${f.name}`);
-        const buf = await res.arrayBuffer();
-        zip.file(f.name, buf);
+        const { data, error: dlErr } = await supabase.storage.from(BUCKET).download(f.path);
+        if (dlErr || !data) throw new Error(`Impossible de télécharger ${f.name} : ${dlErr?.message}`);
+        zip.file(f.name, data);
       }
       setGenerateProgress('Compression en cours…');
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
