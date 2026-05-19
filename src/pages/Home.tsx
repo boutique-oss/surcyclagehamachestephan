@@ -2,13 +2,14 @@ import { Link } from 'react-router-dom';
 import { LayoutTemplate, FileText, Map, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useContent } from '../lib/useContent';
-import { EditableText } from '../components/Editable';
+import { EditableText, EditableImage } from '../components/Editable';
 
 const SPRING = { type: 'spring', stiffness: 90, damping: 16 };
 const SPRING_SLOW = { type: 'spring', stiffness: 60, damping: 14 };
 
 export function Home() {
   const [content, setContent] = useContent('page_home', {
+    heroImage: './workshop.jpg',
     title1: 'Fauteuil',
     title2: 'Réception',
     description:
@@ -80,22 +81,22 @@ export function Home() {
           className="md:col-span-3 relative overflow-hidden order-1 md:order-2"
           style={{ minHeight: '280px', maxHeight: '420px', borderRadius: '2px' }}
         >
-          <img
-            src="./workshop.jpg"
+          <EditableImage
+            src={content.heroImage}
             alt="Atelier Hamache — fauteuil Réception"
-            className="w-full h-full object-cover"
-            style={{ minHeight: '280px', maxHeight: '420px' }}
+            onChange={(val) => setContent({ ...content, heroImage: val })}
+            className="absolute inset-0 w-full h-full object-cover"
           />
           {/* Dégradé gauche pour transition vers le texte */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 pointer-events-none"
             style={{
               background: 'linear-gradient(to right, rgba(13,10,7,0.85) 0%, rgba(13,10,7,0.3) 35%, transparent 65%)',
             }}
           />
           {/* Dégradé bas */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 pointer-events-none"
             style={{
               background: 'linear-gradient(to top, rgba(13,10,7,0.7) 0%, transparent 40%)',
             }}

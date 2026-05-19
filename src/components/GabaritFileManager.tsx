@@ -40,6 +40,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
   const [generatingZip, setGeneratingZip] = useState(false);
   const [generateProgress, setGenerateProgress] = useState('');
   const [msg, setMsg] = useState<Msg>(null);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const zipInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,11 +89,11 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
   }
 
   async function deletePdf(path: string, name: string) {
-    if (!confirm(`Supprimer "${name}" ?`)) return;
     const { error } = await supabase.storage.from(BUCKET).remove([path]);
     if (error) { flash('err', `Erreur suppression : ${error.message}`); return; }
     flash('ok', `"${name}" supprimé.`);
     setPdfs(prev => prev.filter(f => f.path !== path));
+    setPendingDelete(null);
   }
 
   async function uploadZip(file: File) {
@@ -236,26 +237,45 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
         ) : (
           <ul className="flex flex-col gap-1.5">
             {pdfs.map(f => (
-              <li key={f.path} className="flex items-center gap-2 px-3 py-2 rounded bg-black/20 hover:bg-black/30 transition-colors group">
+              <li key={f.path} className="flex items-center gap-2 px-3 py-2 rounded bg-black/20 hover:bg-black/30 transition-colors">
                 <FileText className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
                 <span className="flex-1 text-[10px] text-[#f2e9e1]/80 font-mono truncate">{f.name}</span>
                 <span className="text-[9px] text-[#f2e9e1]/30 font-mono flex-shrink-0">{formatSize(f.size)}</span>
-                <a
-                  href={f.publicUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#f2e9e1]/30 hover:text-secondary transition-colors flex-shrink-0"
-                  title="Télécharger"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                </a>
-                <button
-                  onClick={() => deletePdf(f.path, f.name)}
-                  className="text-[#f2e9e1]/20 hover:text-red-400 transition-colors flex-shrink-0"
-                  title="Supprimer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {pendingDelete === f.path ? (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => deletePdf(f.path, f.name)}
+                      className="text-[9px] text-red-400 hover:text-red-300 border border-red-400/40 px-2 py-0.5 rounded uppercase tracking-wide transition-colors"
+                    >
+                      Confirmer
+                    </button>
+                    <button
+                      onClick={() => setPendingDelete(null)}
+                      className="text-[9px] text-[#f2e9e1]/50 hover:text-[#f2e9e1]/80 border border-[#f2e9e1]/15 px-2 py-0.5 rounded uppercase tracking-wide transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <a
+                      href={f.publicUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#f2e9e1]/60 hover:text-secondary transition-colors"
+                      title="Voir / télécharger"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                    <button
+                      onClick={() => setPendingDelete(f.path)}
+                      className="text-[#f2e9e1]/60 hover:text-red-400 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
