@@ -63,7 +63,7 @@ function KPI({ label, value, unit, sub, color = '#d4a574' }: {
       <p className="text-2xl md:text-3xl font-black font-mono leading-none" style={{ color }}>
         {value}{unit && <span className="text-sm font-normal ml-1 opacity-70">{unit}</span>}
       </p>
-      {sub && <p className="text-[9px] text-[#f0e6d3]/35 font-serif mt-0.5">{sub}</p>}
+      {sub && <p className="text-[9px] text-[#f0e6d3]/35 font-sans mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -101,7 +101,7 @@ function Step({ n, icon: Icon, titre, color = '#d4a574', children }: {
           </span>
           <p className="text-[11px] md:text-sm font-bold uppercase tracking-wide text-[#f0e6d3]">{titre}</p>
         </div>
-        <div className="text-[10px] md:text-[11px] text-[#f0e6d3]/65 font-serif leading-relaxed flex flex-col gap-2">
+        <div className="text-[10px] md:text-[11px] text-[#f0e6d3]/65 font-sans leading-relaxed flex flex-col gap-2">
           {children}
         </div>
       </div>
@@ -122,7 +122,7 @@ export function Recette() {
           Bloc de mousse<br />
           <span className="text-secondary">recyclée compressée</span>
         </h1>
-        <p className="text-xs md:text-sm text-[#f0e6d3]/50 font-serif max-w-md">
+        <p className="text-xs md:text-sm text-[#f0e6d3]/50 font-sans max-w-md">
           Fabrication par compression de flocons HR — colle D4, coffrage bois,
           maintien sous pression. Fauteuil Réception · Atelier Hamache.
         </p>
@@ -161,7 +161,7 @@ export function Recette() {
           {/* Carte base */}
           <div className="glass-panel rounded-xl border border-primary/30 p-4 flex flex-col gap-3 sm:col-span-1">
             <p className="text-[9px] uppercase tracking-widest text-secondary/50 font-mono">Base &amp; certification</p>
-            <p className="text-[10px] md:text-[11px] text-[#f0e6d3]/70 font-serif leading-relaxed">
+            <p className="text-[10px] md:text-[11px] text-[#f0e6d3]/70 font-sans leading-relaxed">
               Résine <strong className="text-[#f0e6d3]/90">polyvinylique (PVA)</strong> — incolore après séchage.
             </p>
             <div className="mt-auto">
@@ -180,7 +180,7 @@ export function Recette() {
               ['Spatule', '8 – 9 m²/l'],
             ].map(([outil, rdt]) => (
               <div key={outil} className="flex justify-between items-center py-1.5 border-b border-primary/15 last:border-0">
-                <span className="text-[10px] text-[#f0e6d3]/50 font-serif">{outil}</span>
+                <span className="text-[10px] text-[#f0e6d3]/50 font-sans">{outil}</span>
                 <span className="text-[10px] font-black font-mono text-secondary">{rdt}</span>
               </div>
             ))}
@@ -198,7 +198,7 @@ export function Recette() {
             ].map((r) => (
               <div key={r} className="flex items-start gap-1.5">
                 <span className="text-secondary mt-0.5 text-[9px] flex-shrink-0">—</span>
-                <p className="text-[9px] md:text-[10px] text-[#f0e6d3]/60 font-serif leading-snug">{r}</p>
+                <p className="text-[9px] md:text-[10px] text-[#f0e6d3]/60 font-sans leading-snug">{r}</p>
               </div>
             ))}
           </div>
@@ -228,7 +228,7 @@ export function Recette() {
             <div className="bg-black/20 rounded-xl p-4 flex flex-col gap-1 border border-primary/20">
               <p className="text-[9px] uppercase tracking-widest font-mono text-[#f0e6d3]/35">Volume coffrage</p>
               <p className="text-lg md:text-xl font-black font-mono text-[#f0e6d3]">0,064 m³</p>
-              <p className="text-[9px] text-[#f0e6d3]/35 font-serif">80 × 80 × 10 cm</p>
+              <p className="text-[9px] text-[#f0e6d3]/35 font-sans">80 × 80 × 10 cm</p>
             </div>
             <div className="flex flex-col gap-2">
               <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-3 py-2.5">
@@ -249,18 +249,18 @@ export function Recette() {
             <div className="bg-black/20 rounded-xl p-3 border border-secondary/20 flex flex-col gap-1">
               <p className="text-[8px] uppercase tracking-widest font-mono text-secondary/50 leading-tight">Résine PU fluide</p>
               <p className="text-lg font-black font-mono text-secondary">8–10 %</p>
-              <p className="text-[9px] text-[#f0e6d3]/40 font-serif">480–600 g</p>
+              <p className="text-[9px] text-[#f0e6d3]/40 font-sans">480–600 g</p>
               <Tag type="ok">recommandé</Tag>
             </div>
             <div className="bg-black/20 rounded-xl p-3 border border-primary/25 flex flex-col gap-1">
               <p className="text-[8px] uppercase tracking-widest font-mono text-[#f0e6d3]/40 leading-tight">Colle D4 épaisse</p>
               <p className="text-lg font-black font-mono text-[#f0e6d3]/70">10–12 %</p>
-              <p className="text-[9px] text-[#f0e6d3]/35 font-serif">600–720 g</p>
+              <p className="text-[9px] text-[#f0e6d3]/35 font-sans">600–720 g</p>
             </div>
             <div className="bg-black/20 rounded-xl p-3 border border-red-500/20 flex flex-col gap-1">
               <p className="text-[8px] uppercase tracking-widest font-mono text-red-400/50 leading-tight">Eau · MDI</p>
               <p className="text-lg font-black font-mono text-red-400">1–2 %</p>
-              <p className="text-[9px] text-[#f0e6d3]/35 font-serif">60–120 g</p>
+              <p className="text-[9px] text-[#f0e6d3]/35 font-sans">60–120 g</p>
               <Tag type="warn">critique</Tag>
             </div>
           </div>
@@ -350,9 +350,9 @@ export function Recette() {
             <div key={symptome} className="glass-panel rounded-xl border border-primary/25 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
               <div className="flex items-center gap-2 sm:w-48 flex-shrink-0">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-[#f0e6d3]/30 flex-shrink-0" />
-                <span className="text-[10px] md:text-[11px] text-[#f0e6d3]/50 font-serif">{symptome}</span>
+                <span className="text-[10px] md:text-[11px] text-[#f0e6d3]/50 font-sans">{symptome}</span>
               </div>
-              <span className="text-[10px] md:text-[11px] text-[#f0e6d3]/80 font-serif flex-1">{action}</span>
+              <span className="text-[10px] md:text-[11px] text-[#f0e6d3]/80 font-sans flex-1">{action}</span>
               <Tag type={type}>{type === 'warn' ? 'mélange' : 'dosage'}</Tag>
             </div>
           ))}
@@ -367,14 +367,14 @@ export function Recette() {
         >
           <div>
             <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-secondary/50 mb-3">Masse mousse</p>
-            <p className="text-[11px] md:text-sm font-serif text-[#f0e6d3]/70 leading-relaxed">
+            <p className="text-[11px] md:text-sm font-sans text-[#f0e6d3]/70 leading-relaxed">
               → <strong className="text-secondary text-base md:text-lg font-black">5,1 kg</strong> pour 80 kg/m³ (objectif exact)<br />
               → <span className="text-[#f0e6d3]/50">6 kg</span> acceptable → ≈ 95 kg/m³ (mousse plus ferme)
             </p>
           </div>
           <div>
             <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-secondary/50 mb-3">Liant idéal</p>
-            <p className="text-[11px] md:text-sm font-serif text-[#f0e6d3]/70 leading-relaxed">
+            <p className="text-[11px] md:text-sm font-sans text-[#f0e6d3]/70 leading-relaxed">
               → <strong className="text-secondary text-base md:text-lg font-black">~500 g</strong> résine PU fluide<br />
               → Résine fluide préférée à la D4 épaisse pour l'homogénéité du mélange.
             </p>
