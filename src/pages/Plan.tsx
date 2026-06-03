@@ -16,7 +16,7 @@ const defaultContent: PlanContent = {
   plan3Url: '',
 };
 
-const PLAN_LABELS = ['Plan 1', 'Plan 2', 'Plan 3'] as const;
+const PLAN_LABELS = ['Plan Bois', 'Plan Mousse', 'Plan Ensemble'] as const;
 const PLAN_KEYS = ['plan1Url', 'plan2Url', 'plan3Url'] as const;
 
 export function Plan() {
@@ -46,10 +46,10 @@ export function Plan() {
       >
         <div>
           <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-secondary/70 font-mono mb-1">
-            02. Plans A3
-          </p>
-          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-wide text-[#f0e6d3]">
             Plans techniques
+          </p>
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tight text-[#f0e6d3] leading-tight">
+            Plan
           </h1>
           <p className="text-[11px] md:text-sm text-[#f0e6d3]/50 font-serif mt-1">
             Fauteuil Réception — impression A3 recommandée

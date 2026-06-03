@@ -172,8 +172,8 @@ export function Recette() {
 
       {/* ── En-tête ── */}
       <motion.header initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.35em] text-secondary/50 font-mono mb-2">01 · Recette</p>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-[#f0e6d3] leading-tight mb-3">
+        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.35em] text-secondary/50 font-mono mb-2">Recette</p>
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight text-[#f0e6d3] leading-tight mb-3">
           Bloc de mousse<br />
           <span className="text-secondary">recyclée compressée</span>
         </h1>
