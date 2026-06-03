@@ -1,222 +1,200 @@
-import { Save, Pencil } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAdmin } from '../context/AdminContext';
-import { EditableText, EditableImage } from '../components/Editable';
+import { EditableText } from '../components/Editable';
 import { useContent } from '../lib/useContent';
 
-interface MousseRecette {
+interface Ingredient {
   id: string;
   nom: string;
-  type: string;
-  image: string;
-  ingredients: string;
-  technique: string;
-  epaisseur: string;
-  densite: string;
-  usage: string;
+  detail: string;
 }
 
-interface RecettesContent {
-  recettes: MousseRecette[];
+interface Etape {
+  id: string;
+  action: string;
 }
 
-const defaultContent: RecettesContent = {
-  recettes: [
-    {
-      id: "mousse-1",
-      nom: "Mousse Haute Résilience",
-      type: "HR 35 kg/m³",
-      image: "https://images.unsplash.com/photo-1558611997-7687bb3365ba?q=80&w=800&auto=format&fit=crop",
-      ingredients: "Chutes de mousse HR 35 kg/m³, polyol recyclé, liant naturel.",
-      technique: "Déchiquetage manuel des chutes, calibrage par densité. Pressage en moule avec liant, séchage à plat 24 h. Découpe à la scie à ruban selon gabarit.",
-      epaisseur: "80 mm",
-      densite: "35 kg/m³",
-      usage: "Assise principale",
-    },
-    {
-      id: "mousse-2",
-      nom: "Mousse Recyclée Copeaux",
-      type: "Copeaux HR 40 kg/m³",
-      image: "https://images.unsplash.com/photo-1616464916356-3a4082e077fc?q=80&w=800&auto=format&fit=crop",
-      ingredients: "Copeaux de mousse HR 40 kg/m³, toile de coton non traité, fil de surpiqûre.",
-      technique: "Tri et nettoyage des copeaux. Remplissage homogène dans housse coton. Fermeture à la machine, mise en forme manuelle, contrôle densité à la pression.",
-      epaisseur: "60 mm",
-      densite: "40 kg/m³",
-      usage: "Rembourrage dossier",
-    },
-    {
-      id: "mousse-3",
-      nom: "Mousse Mémoire de Forme",
-      type: "Visco 50 kg/m³",
-      image: "https://images.unsplash.com/photo-1540340061722-9293d5163008?q=80&w=800&auto=format&fit=crop",
-      ingredients: "Chutes visco-élastique 50 kg/m³, colle néoprène, enveloppe coton recyclé.",
-      technique: "Stratification par couches alternées visco/HR. Encollage néoprène entre couches. Couture de maintien périphérique. Finition par surpiqûre visible cognac.",
-      epaisseur: "25 mm",
-      densite: "50 kg/m³",
-      usage: "Confort appuie-tête",
-    },
+interface RecetteContent {
+  titre: string;
+  sousTitre: string;
+  ingredients: Ingredient[];
+  etapes: Etape[];
+  noteFinale: string;
+}
+
+const defaultContent: RecetteContent = {
+  titre: 'Recette de rembourrage recyclé',
+  sousTitre: 'Fauteuil Réception — Atelier Hamache',
+  ingredients: [
+    { id: 'ing-1', nom: 'Néoprène', detail: 'À compléter : épaisseur et grammage' },
+    { id: 'ing-2', nom: 'Liant Stockmeier', detail: 'À compléter : dosage en g/m²' },
+    { id: 'ing-3', nom: 'Colle D4', detail: 'À compléter : temps de contact et température' },
+    { id: 'ing-4', nom: 'Chutes de mousse HR', detail: 'À compléter : densité et granulométrie cible' },
   ],
+  etapes: [
+    { id: 'et-1', action: 'Trier et peser les chutes de mousse par densité.' },
+    { id: 'et-2', action: 'Déchiqueter les chutes manuellement aux dimensions prescrites. À compléter : dimensions cibles en mm.' },
+    { id: 'et-3', action: 'Mélanger avec le liant Stockmeier. À compléter : proportion liant / mousse et durée de malaxage.' },
+    { id: 'et-4', action: 'Encoller les faces de contact au néoprène. À compléter : temps de séchage avant assemblage.' },
+    { id: 'et-5', action: 'Presser en moule selon le gabarit. À compléter : pression et durée de pressage.' },
+    { id: 'et-6', action: 'Laisser sécher à plat. À compléter : durée de séchage et conditions (température, ventilation).' },
+    { id: 'et-7', action: 'Coller à la D4 sur la structure bois. À compléter : délai avant utilisation.' },
+    { id: 'et-8', action: 'Contrôler la tenue et la forme finale avant la pose du tissu.' },
+  ],
+  noteFinale: 'À compléter : conseils de stockage, références fournisseurs, indications de sécurité (ventilation, EPI).',
 };
-
-const VOLET_COLORS = [
-  { border: 'border-l-secondary', badge: 'bg-secondary text-background', label: 'text-secondary', num: 'text-secondary' },
-  { border: 'border-l-accent', badge: 'bg-accent text-background', label: 'text-accent', num: 'text-accent' },
-  { border: 'border-l-primary', badge: 'bg-primary text-[#f2e9e1]', label: 'text-primary', num: 'text-primary' },
-];
 
 export function Recette() {
   const { isEditMode, toggleEditMode } = useAdmin();
-  const [content, setContent] = useContent<RecettesContent>('page_recette', defaultContent);
-  const recettes = content.recettes;
+  const [content, setContent] = useContent<RecetteContent>('page_recette_v2', defaultContent);
 
-  const updateRecette = (id: string, field: keyof MousseRecette, value: string) => {
+  const updateIngredient = (id: string, field: keyof Ingredient, value: string) => {
     setContent({
       ...content,
-      recettes: recettes.map(r => r.id === id ? { ...r, [field]: value } : r),
+      ingredients: content.ingredients.map(i => i.id === id ? { ...i, [field]: value } : i),
     });
   };
 
-  const handleSave = () => {
-    toggleEditMode();
+  const updateEtape = (id: string, value: string) => {
+    setContent({
+      ...content,
+      etapes: content.etapes.map(e => e.id === id ? { ...e, action: value } : e),
+    });
   };
 
   return (
-    <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col gap-4 md:gap-8 pb-4 md:pb-12 pt-2 md:pt-4">
+    <div className="flex-1 w-full max-w-3xl mx-auto flex flex-col gap-6 md:gap-10 pb-6 md:pb-16 pt-2 md:pt-4">
+
       {/* En-tête */}
-      <div className="flex flex-row items-center justify-between gap-4 border-b border-primary pb-4 md:pb-6">
-        <div>
-          <h1 className="text-xs md:text-sm uppercase tracking-[0.2em] font-bold text-secondary mb-0.5 md:mb-1">
-            Recettes de Mousses
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-row items-start justify-between gap-4 border-b border-primary pb-5 md:pb-7"
+      >
+        <div className="flex flex-col gap-1">
+          <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-secondary/70 font-mono">
+            02. Recette
+          </p>
+          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-wide text-[#f0e6d3] leading-tight">
+            <EditableText
+              value={content.titre}
+              onChange={(val) => setContent({ ...content, titre: val })}
+            />
           </h1>
-          <p className="text-[10px] uppercase tracking-widest opacity-70 hidden sm:block">3 volets — Rembourrage recyclé</p>
+          <p className="text-[11px] md:text-sm text-[#f0e6d3]/50 font-serif mt-1">
+            <EditableText
+              value={content.sousTitre}
+              onChange={(val) => setContent({ ...content, sousTitre: val })}
+            />
+          </p>
         </div>
+
         {isEditMode && (
           <button
-            onClick={handleSave}
-            className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-secondary text-background text-[10px] font-bold uppercase tracking-widest hover:bg-accent transition-colors flex-shrink-0"
+            onClick={toggleEditMode}
+            className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-secondary text-background text-[10px] font-bold uppercase tracking-widest hover:bg-accent transition-colors flex-shrink-0 mt-1"
           >
             <Save className="w-3 h-3" />
             Enregistrer
           </button>
         )}
-      </div>
+      </motion.div>
 
-      {/* 3 volets — toujours en ligne (image gauche + contenu droit) */}
-      <div className="flex flex-col gap-3 md:gap-6">
-        {recettes.map((recette, idx) => {
-          const color = VOLET_COLORS[idx % VOLET_COLORS.length];
-          return (
-            <motion.div
-              key={recette.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.08 }}
-              className={`glass-panel rounded-lg border-l-4 ${color.border} overflow-hidden`}
+      {/* Section Ingrédients / Matériaux */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        className="flex flex-col gap-4"
+      >
+        <h2 className="text-[10px] md:text-xs uppercase tracking-[0.25em] font-bold text-secondary border-l-4 border-l-secondary pl-3">
+          Ingrédients / Matériaux
+        </h2>
+
+        <ul className="flex flex-col gap-2 md:gap-3">
+          {content.ingredients.map((ing) => (
+            <li
+              key={ing.id}
+              className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3 glass-panel rounded-lg px-4 py-3"
             >
-              {/* Toujours flex-row : image à gauche, contenu à droite */}
-              <div className="flex flex-row">
-                {/* Image — largeur fixe selon écran */}
-                <div className="w-24 sm:w-36 md:w-2/5 flex-shrink-0 relative self-stretch min-h-[130px] sm:min-h-[180px] md:min-h-[220px] bg-[#121a0d]">
-                  {isEditMode ? (
-                    <div className="absolute inset-0">
-                      <EditableImage
-                        src={recette.image}
-                        alt={recette.nom}
-                        onChange={(val) => updateRecette(recette.id, 'image', val)}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <img
-                      src={recette.image}
-                      alt={recette.nom}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  )}
-                  {/* Numéro */}
-                  <div className={`absolute top-2 left-2 text-2xl md:text-4xl font-bold opacity-70 ${color.num} select-none drop-shadow-lg`}>
-                    0{idx + 1}
-                  </div>
-                  {/* Badge type */}
-                  <div className={`absolute bottom-2 left-2 right-2 ${color.badge} text-[8px] md:text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 truncate`}>
-                    {isEditMode ? (
-                      <EditableText
-                        value={recette.type}
-                        onChange={(val) => updateRecette(recette.id, 'type', val)}
-                        className="bg-transparent border-none text-inherit p-0 text-[8px]"
-                      />
-                    ) : recette.type}
-                  </div>
-                </div>
+              <span className="text-[11px] md:text-sm font-bold text-secondary flex-shrink-0 uppercase tracking-wide">
+                <EditableText
+                  value={ing.nom}
+                  onChange={(val) => updateIngredient(ing.id, 'nom', val)}
+                />
+              </span>
+              <span className="text-[10px] md:text-[11px] text-[#f0e6d3]/55 font-serif italic leading-snug">
+                <EditableText
+                  value={ing.detail}
+                  onChange={(val) => updateIngredient(ing.id, 'detail', val)}
+                />
+              </span>
+            </li>
+          ))}
+        </ul>
+      </motion.section>
 
-                {/* Contenu */}
-                <div className="flex-1 p-3 sm:p-4 md:p-6 flex flex-col gap-2 md:gap-4 min-w-0">
-                  {/* Titre */}
-                  <div className="flex items-center gap-1.5">
-                    {isEditMode && <Pencil className="w-3 h-3 text-secondary flex-shrink-0" />}
-                    <h2 className={`text-xs sm:text-sm md:text-base font-bold uppercase tracking-wide ${color.label} truncate`}>
-                      <EditableText
-                        value={recette.nom}
-                        onChange={(val) => updateRecette(recette.id, 'nom', val)}
-                      />
-                    </h2>
-                  </div>
-
-                  {/* Specs en ligne */}
-                  <div className="grid grid-cols-3 gap-1.5 md:gap-3">
-                    {[
-                      { label: 'Ép.', labelFull: 'Épaisseur', field: 'epaisseur' as const },
-                      { label: 'Dens.', labelFull: 'Densité', field: 'densite' as const },
-                      { label: 'Usage', labelFull: 'Usage', field: 'usage' as const },
-                    ].map(({ label, labelFull, field }) => (
-                      <div key={field} className="bg-[#121a0d]/60 border border-primary/50 rounded p-1.5 md:p-2">
-                        <div className={`text-[8px] md:text-[9px] uppercase tracking-widest mb-0.5 md:mb-1 ${color.label}`}>
-                          <span className="md:hidden">{label}</span>
-                          <span className="hidden md:inline">{labelFull}</span>
-                        </div>
-                        <div className="text-[9px] md:text-xs text-[#f2e9e1] font-mono leading-tight">
-                          <EditableText
-                            value={recette[field]}
-                            onChange={(val) => updateRecette(recette.id, field, val)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Composants */}
-                  <div>
-                    <div className={`text-[9px] md:text-[10px] uppercase tracking-widest border-l-2 ${color.border} pl-1.5 md:pl-2 mb-0.5 md:mb-1 ${color.label}`}>
-                      Composants
-                    </div>
-                    <div className="text-[10px] md:text-[11px] text-[#f2e9e1]/80 font-serif ml-2 leading-snug">
-                      <EditableText
-                        value={recette.ingredients}
-                        onChange={(val) => updateRecette(recette.id, 'ingredients', val)}
-                        multiline
-                      />
-                    </div>
-                  </div>
-
-                  {/* Technique — cachée sur très petit mobile pour éviter l'écrasement */}
-                  <div className="hidden sm:block">
-                    <div className={`text-[9px] md:text-[10px] uppercase tracking-widest border-l-2 ${color.border} pl-1.5 md:pl-2 mb-0.5 md:mb-1 ${color.label}`}>
-                      Technique
-                    </div>
-                    <div className="text-[10px] md:text-[11px] text-[#f2e9e1]/80 font-serif ml-2 leading-relaxed">
-                      <EditableText
-                        value={recette.technique}
-                        onChange={(val) => updateRecette(recette.id, 'technique', val)}
-                        multiline
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+      {/* Séparateur */}
+      <div className="flex items-center gap-4">
+        <div className="flex-1 h-px bg-primary/50" />
+        <span className="text-[9px] uppercase tracking-[0.3em] text-[#f0e6d3]/20 font-mono">préparation</span>
+        <div className="flex-1 h-px bg-primary/50" />
       </div>
+
+      {/* Section Étapes */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.16 }}
+        className="flex flex-col gap-4"
+      >
+        <h2 className="text-[10px] md:text-xs uppercase tracking-[0.25em] font-bold text-secondary border-l-4 border-l-accent pl-3">
+          Étapes
+        </h2>
+
+        <ol className="flex flex-col gap-3 md:gap-4">
+          {content.etapes.map((etape, idx) => (
+            <li key={etape.id} className="flex gap-4 items-start">
+              {/* Numéro */}
+              <span
+                className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full border border-secondary/40 flex items-center justify-center text-[10px] md:text-xs font-bold text-secondary font-mono mt-0.5"
+                style={{ background: 'rgba(212,165,116,0.07)' }}
+              >
+                {idx + 1}
+              </span>
+              {/* Texte */}
+              <div className="flex-1 text-[11px] md:text-sm text-[#f0e6d3]/80 font-serif leading-relaxed pt-1">
+                <EditableText
+                  value={etape.action}
+                  onChange={(val) => updateEtape(etape.id, val)}
+                  multiline
+                />
+              </div>
+            </li>
+          ))}
+        </ol>
+      </motion.section>
+
+      {/* Note finale */}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.24 }}
+        className="glass-panel rounded-lg border-l-4 border-l-primary px-4 py-4 flex flex-col gap-1.5"
+      >
+        <h3 className="text-[9px] md:text-[10px] uppercase tracking-[0.25em] font-bold text-primary/80">
+          Notes &amp; sécurité
+        </h3>
+        <div className="text-[10px] md:text-[11px] text-[#f0e6d3]/55 font-serif italic leading-relaxed">
+          <EditableText
+            value={content.noteFinale}
+            onChange={(val) => setContent({ ...content, noteFinale: val })}
+            multiline
+          />
+        </div>
+      </motion.section>
+
     </div>
   );
 }
