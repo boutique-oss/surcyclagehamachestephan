@@ -15,8 +15,8 @@ import { AdminButton } from './components/AdminLogin';
 const NAV_LINKS = [
   { to: '/', label: 'Accueil', full: '00. Accueil', icon: Armchair },
   { to: '/recette', label: 'Recette', full: '01. Recette', icon: FileText },
-  { to: '/plan', label: 'Plan A3', full: '02. Plan A3', icon: Map },
-  { to: '/gabarit', label: 'Fichier', full: '03. Fichier', icon: LayoutTemplate },
+  { to: '/plan', label: 'Plan', full: '02. Plan', icon: Map },
+  { to: '/gabarit', label: 'CNC', full: '03. CNC', icon: LayoutTemplate },
 ];
 
 /* ── Warm editorial blobs ── */

@@ -142,8 +142,8 @@ export function Home() {
             glowColor: 'rgba(212,165,116,0.35)',
           },
           {
-            title: 'Plan A3',
-            fullTitle: '02. Plan A3',
+            title: 'Plan',
+            fullTitle: '02. Plan',
             desc: "Image technique haute-résolution du schéma avec annotations interactives.",
             icon: Map,
             to: '/plan',
@@ -152,9 +152,9 @@ export function Home() {
             glowColor: 'rgba(139,90,60,0.35)',
           },
           {
-            title: 'Fichier',
-            fullTitle: '03. Fichier',
-            desc: 'Structure modulaire pour la pièce. Inclut les spécifications et dimensions clés.',
+            title: 'CNC',
+            fullTitle: '03. CNC',
+            desc: 'Fichiers de découpe numérique. Structure modulaire avec spécifications et dimensions clés.',
             icon: LayoutTemplate,
             to: '/gabarit',
             accentColor: 'rgba(45,80,22,1)',
