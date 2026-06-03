@@ -13,6 +13,10 @@ import { cn } from './lib/utils';
 import { AdminProvider } from './context/AdminContext';
 import { AdminButton } from './components/AdminLogin';
 import { AnimationProvider, useAnim } from './context/AnimationContext';
+import { Intro } from './components/Intro';
+import { AnimatePresence, motion } from 'motion/react';
+import { lazy, Suspense } from 'react';
+const Spline = lazy(() => import('@splinetool/react-spline'));
 
 const NAV_LINKS = [
   { to: '/', label: 'Accueil', full: 'Accueil', icon: Armchair },
@@ -105,6 +109,23 @@ function CursorGlow() {
         transition: 'left 0.12s ease-out, top 0.12s ease-out',
       }}
     />
+  );
+}
+
+/* ── Spline 3D background ── */
+function SplineBackground() {
+  const { s } = useAnim();
+  if (!s.spline) return null;
+  return (
+    <div
+      aria-hidden
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0, opacity: 0.55 }}
+    >
+      <Suspense fallback={null}>
+        <Spline scene="https://prod.spline.design/tCFrNCbx0Yp4Z8iR/scene.splinecode" />
+      </Suspense>
+    </div>
   );
 }
 
@@ -269,9 +290,19 @@ function BottomNav() {
 }
 
 function AppInner() {
+  const [intro, setIntro] = useState(true);
+
   return (
+    <>
+      <AnimatePresence>{intro && <Intro onEnter={() => setIntro(false)} />}</AnimatePresence>
+
     <HashRouter>
-      <div className="min-h-screen bg-background text-[#f0e6d3] flex flex-col pt-14 md:pt-16 font-sans">
+      <motion.div
+        initial={false}
+        animate={{ opacity: intro ? 0 : 1 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+        className="min-h-screen bg-background text-[#f0e6d3] flex flex-col pt-14 md:pt-16 font-sans">
+        <SplineBackground />
         <LiquidBackground />
         <ParticleLayer />
         <ScanlineLayer />
@@ -289,8 +320,9 @@ function AppInner() {
             </Routes>
           </div>
         </main>
-      </div>
+      </motion.div>
     </HashRouter>
+    </>
   );
 }
 
