@@ -133,7 +133,7 @@ export function Home() {
         {[
           {
             title: 'Recette',
-            fullTitle: '01. Recette',
+            fullTitle: 'Recette',
             desc: 'Étapes de fabrication détaillées, interactives et éditables avec totaux.',
             icon: FileText,
             to: '/recette',

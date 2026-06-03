@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Ruler, Weight, Download, Archive, FolderOpen } from 'lucide-react';
 import { motion } from 'motion/react';
+
 import { useContent } from '../lib/useContent';
 import { EditableText } from '../components/Editable';
 import { useAdmin } from '../context/AdminContext';
@@ -26,6 +27,18 @@ export function Gabarit() {
 
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col gap-5 md:gap-10 pb-6 md:pb-12 pt-3 md:pt-6">
+
+      {/* ── En-tête ── */}
+      <motion.header initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.35em] text-secondary/50 font-mono mb-2">CNC</p>
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight text-[#f0e6d3] leading-tight mb-3">
+          Fichiers de<br />
+          <span className="text-secondary">découpe numérique</span>
+        </h1>
+        <p className="text-xs md:text-sm text-[#f0e6d3]/50 font-sans max-w-md">
+          Spécifications techniques et gabarits. Fauteuil Réception · Atelier Hamache.
+        </p>
+      </motion.header>
 
       {/* ── Specs + CTAs ── */}
       <div className="grid md:grid-cols-3 gap-3 md:gap-8">
@@ -85,14 +98,14 @@ export function Gabarit() {
           transition={{ delay: 0.3 }}
           className="flex flex-row md:flex-col gap-3 md:gap-4"
         >
-          <Link to="/recette" className="group glass-card flex-1 flex flex-col justify-center items-center text-center hover:bg-secondary hover:text-background transition-colors border border-secondary shadow-glow-secondary">
-            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors">01. Recette</h3>
+          <Link to="/recette" className="group glass-card flex-1 flex flex-col justify-center items-center text-center hover:bg-secondary/20 transition-colors border border-secondary/40 bg-secondary/5">
+            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors text-secondary">Recette</h3>
             <p className="text-[9px] md:text-[10px] opacity-70 tracking-widest uppercase mb-2 md:mb-4 group-hover:opacity-100 hidden sm:block">Étapes &amp; coûts</p>
             <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-all" />
           </Link>
 
-          <Link to="/plan" className="group glass-card flex-1 flex flex-col justify-center items-center text-center hover:bg-accent hover:text-[#f2e9e1] transition-colors border border-accent shadow-glow">
-            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors">02. Plan A3</h3>
+          <Link to="/plan" className="group glass-card flex-1 flex flex-col justify-center items-center text-center hover:bg-accent/20 transition-colors border border-accent/40 bg-accent/5">
+            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors text-[#d4a574]">Plan</h3>
             <p className="text-[9px] md:text-[10px] opacity-70 tracking-widest uppercase mb-2 md:mb-4 group-hover:opacity-100 hidden sm:block">Schéma interactif</p>
             <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-all" />
           </Link>

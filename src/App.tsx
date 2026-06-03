@@ -13,10 +13,10 @@ import { AdminProvider } from './context/AdminContext';
 import { AdminButton } from './components/AdminLogin';
 
 const NAV_LINKS = [
-  { to: '/', label: 'Accueil', full: '00. Accueil', icon: Armchair },
-  { to: '/recette', label: 'Recette', full: '01. Recette', icon: FileText },
-  { to: '/plan', label: 'Plan', full: '02. Plan', icon: Map },
-  { to: '/gabarit', label: 'CNC', full: '03. CNC', icon: LayoutTemplate },
+  { to: '/', label: 'Accueil', full: 'Accueil', icon: Armchair },
+  { to: '/recette', label: 'Recette', full: 'Recette', icon: FileText },
+  { to: '/plan', label: 'Plan', full: 'Plan', icon: Map },
+  { to: '/gabarit', label: 'CNC', full: 'CNC', icon: LayoutTemplate },
 ];
 
 /* ── Warm editorial blobs ── */
