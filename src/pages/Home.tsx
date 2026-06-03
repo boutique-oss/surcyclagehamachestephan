@@ -132,18 +132,8 @@ export function Home() {
       <div className="grid grid-cols-3 gap-2 md:gap-6">
         {[
           {
-            title: 'Gabarit',
-            fullTitle: '01. Gabarit',
-            desc: 'Structure modulaire pour la pièce. Inclut les spécifications et dimensions clés.',
-            icon: LayoutTemplate,
-            to: '/gabarit',
-            accentColor: 'rgba(45,80,22,1)',
-            accentColorDim: 'rgba(45,80,22,0.5)',
-            glowColor: 'rgba(45,80,22,0.35)',
-          },
-          {
             title: 'Recette',
-            fullTitle: '02. Recette',
+            fullTitle: '01. Recette',
             desc: 'Étapes de fabrication détaillées, interactives et éditables avec totaux.',
             icon: FileText,
             to: '/recette',
@@ -153,13 +143,23 @@ export function Home() {
           },
           {
             title: 'Plan A3',
-            fullTitle: '03. Plan A3',
+            fullTitle: '02. Plan A3',
             desc: "Image technique haute-résolution du schéma avec annotations interactives.",
             icon: Map,
             to: '/plan',
             accentColor: 'rgba(139,90,60,1)',
             accentColorDim: 'rgba(139,90,60,0.5)',
             glowColor: 'rgba(139,90,60,0.35)',
+          },
+          {
+            title: 'Fichier',
+            fullTitle: '03. Fichier',
+            desc: 'Structure modulaire pour la pièce. Inclut les spécifications et dimensions clés.',
+            icon: LayoutTemplate,
+            to: '/gabarit',
+            accentColor: 'rgba(45,80,22,1)',
+            accentColorDim: 'rgba(45,80,22,0.5)',
+            glowColor: 'rgba(45,80,22,0.35)',
           },
         ].map((card, idx) => (
           <motion.div
