@@ -20,7 +20,9 @@ import {
   Check,
   RefreshCw,
   CloudOff,
+  Sparkles,
 } from 'lucide-react';
+import { useAnim } from '../context/AnimationContext';
 import { motion } from 'motion/react';
 import { errorMonitor, ErrorEntry, ErrorType } from '../lib/errorMonitor';
 import { supabase } from '../lib/supabase';
@@ -522,14 +524,91 @@ function TabSystem() {
   );
 }
 
+// ─── Tab: Animations ─────────────────────────────────────────────────────────
+
+function Toggle({ on, onChange, label, desc }: { on: boolean; onChange: (v: boolean) => void; label: string; desc: string }) {
+  return (
+    <div className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
+      <div className="flex-1 pr-3">
+        <p className="text-[10px] text-[#f2e9e1]/70 font-semibold">{label}</p>
+        <p className="text-[9px] text-[#f2e9e1]/25 mt-0.5 leading-snug">{desc}</p>
+      </div>
+      <button
+        onClick={() => onChange(!on)}
+        className={`shrink-0 w-9 h-5 rounded-full transition-all duration-300 relative ${on ? 'bg-secondary/60' : 'bg-white/10'}`}
+      >
+        <span
+          className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 ${on ? 'left-[18px] bg-secondary' : 'left-0.5 bg-white/30'}`}
+        />
+      </button>
+    </div>
+  );
+}
+
+function TabAnimations() {
+  const { s, set } = useAnim();
+
+  return (
+    <div className="flex flex-col h-full overflow-y-auto px-3 py-3 gap-3">
+      <div className="border border-white/5 rounded p-3">
+        <p className="text-[9px] uppercase tracking-widest text-secondary font-bold mb-3">Effets visuels</p>
+        <Toggle
+          on={s.particles}
+          onChange={v => set({ particles: v })}
+          label="Particules ambrées"
+          desc="Poussières flottantes qui montent depuis le bas de l'écran"
+        />
+        <Toggle
+          on={s.scanline}
+          onChange={v => set({ scanline: v })}
+          label="Ligne de scan"
+          desc="Fine ligne lumineuse qui traverse l'écran périodiquement"
+        />
+        <Toggle
+          on={s.cursorGlow}
+          onChange={v => set({ cursorGlow: v })}
+          label="Lueur curseur"
+          desc="Halo subtil brun-ambre qui suit le pointeur"
+        />
+        <Toggle
+          on={s.logoShimmer}
+          onChange={v => set({ logoShimmer: v })}
+          label="Shimmer logo"
+          desc="Animation dorée sur le logo R dans la barre de navigation"
+        />
+      </div>
+
+      <div className="border border-white/5 rounded p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] uppercase tracking-widest text-secondary font-bold">Intensité blobs</p>
+          <span className="text-[9px] font-mono text-[#f2e9e1]/50">{s.blobIntensity}%</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={s.blobIntensity}
+          onChange={e => set({ blobIntensity: Number(e.target.value) })}
+          className="w-full accent-[#d4a574] cursor-pointer"
+        />
+        <div className="flex justify-between text-[8px] text-[#f2e9e1]/20 font-mono">
+          <span>Désactivé</span>
+          <span>Maximum</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Panneau principal ────────────────────────────────────────────────────────
 
-type TabId = 'errors' | 'audit' | 'system';
+type TabId = 'errors' | 'audit' | 'system' | 'animations';
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'errors',  label: 'Erreurs',       icon: <AlertTriangle className="w-3 h-3" /> },
-  { id: 'audit',   label: 'Modifications', icon: <History className="w-3 h-3" /> },
-  { id: 'system',  label: 'Système',       icon: <Globe className="w-3 h-3" /> },
+  { id: 'errors',     label: 'Erreurs',    icon: <AlertTriangle className="w-3 h-3" /> },
+  { id: 'audit',      label: 'Modifs',     icon: <History className="w-3 h-3" /> },
+  { id: 'animations', label: 'Anim',       icon: <Sparkles className="w-3 h-3" /> },
+  { id: 'system',     label: 'Système',    icon: <Globe className="w-3 h-3" /> },
 ];
 
 interface AdminPanelProps {
@@ -624,9 +703,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {tab === 'errors'  && <TabErrors />}
-        {tab === 'audit'   && <TabAudit />}
-        {tab === 'system'  && <TabSystem />}
+        {tab === 'errors'     && <TabErrors />}
+        {tab === 'audit'      && <TabAudit />}
+        {tab === 'animations' && <TabAnimations />}
+        {tab === 'system'     && <TabSystem />}
       </div>
     </motion.div>
   );
