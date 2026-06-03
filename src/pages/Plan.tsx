@@ -1,278 +1,180 @@
-import { useState, useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, Maximize, Download } from 'lucide-react';
-import { motion, useAnimationControls } from 'motion/react';
-import { cn } from '../lib/utils';
+import { Download, FileText, FolderOpen } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useContent } from '../lib/useContent';
-import { EditableText, EditableImage } from '../components/Editable';
 import { useAdmin } from '../context/AdminContext';
+import { PlanPdfManager } from '../components/PlanPdfManager';
 
-const DEFAULT_ANNOTATIONS = [
-  { id: 1, x: 25, y: 35, title: "Structure Bois", desc: "Chêne massif, épaisseur 30mm." },
-  { id: 2, x: 50, y: 65, title: "Rembourrage", desc: "Zone de compression max. Copeaux densité 40kg/m3." },
-  { id: 3, x: 75, y: 45, title: "Assemblage", desc: "Vis M8 apparentes avec inserts métalliques." },
-  { id: 4, x: 40, y: 85, title: "Coutures", desc: "Surpiqûre double, fil synthétique ultra-résistant." }
-];
+interface PlanContent {
+  plan1Url: string;
+  plan2Url: string;
+  plan3Url: string;
+}
+
+const defaultContent: PlanContent = {
+  plan1Url: '',
+  plan2Url: '',
+  plan3Url: '',
+};
+
+const PLAN_LABELS = ['Plan 1', 'Plan 2', 'Plan 3'] as const;
+const PLAN_KEYS = ['plan1Url', 'plan2Url', 'plan3Url'] as const;
 
 export function Plan() {
   const { isEditMode } = useAdmin();
-  const [scale, setScale] = useState(1);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeAnnotation, setActiveAnnotation] = useState<number | null>(null);
+  const [content, setContent] = useContent<PlanContent>('page_plan_v2', defaultContent);
 
-  const [content, setContent] = useContent('page_plan', {
-    planImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2400&auto=format&fit=crop',
-    annotations: DEFAULT_ANNOTATIONS
-  });
-
-  const updateAnnotation = (id: number, field: string, value: string) => {
-    setContent({
-      ...content,
-      annotations: content.annotations.map(a => a.id === id ? { ...a, [field]: value } : a)
-    });
+  const handleChange = (key: 'plan1Url' | 'plan2Url' | 'plan3Url', url: string) => {
+    setContent({ ...content, [key]: url });
   };
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimationControls();
-  const pinchDist = useRef<number | null>(null);
-  const isMobile = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
+  const plans = PLAN_KEYS.map((key, i) => ({
+    key,
+    label: PLAN_LABELS[i],
+    url: content[key],
+  }));
 
-  // Contraintes de drag calculées dynamiquement selon le scale
-  const [dragBounds, setDragBounds] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const extra = Math.max(0, scale - 1);
-    setDragBounds({
-      left:   -(el.offsetWidth  * extra / 2),
-      right:   (el.offsetWidth  * extra / 2),
-      top:    -(el.offsetHeight * extra / 2),
-      bottom:  (el.offsetHeight * extra / 2),
-    });
-  }, [scale]);
-
-  const handleZoomIn = () => setScale(s => Math.min(s + 0.25, 4));
-  const handleZoomOut = () => setScale(s => Math.max(s - 0.25, 0.5));
-  const handleReset = () => {
-    setScale(1);
-    controls.start({ x: 0, y: 0 });
-  };
-
-  const exitFullscreen = () => {
-    if (document.fullscreenElement) document.exitFullscreen();
-    setIsFullscreen(false);
-  };
-
-  const toggleFullscreen = async () => {
-    if (isFullscreen) {
-      exitFullscreen();
-    } else {
-      setIsFullscreen(true);
-      try {
-        await containerRef.current?.requestFullscreen();
-      } catch {
-        // CSS fullscreen appliqué — fallback iOS
-      }
-    }
-  };
-
-  // Pinch-to-zoom mobile + ESC + fullscreenchange
-  useEffect(() => {
-    const el = containerRef.current;
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        pinchDist.current = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2 && pinchDist.current !== null) {
-        e.preventDefault();
-        const d = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        setScale(s => Math.min(Math.max(s * (d / pinchDist.current!), 0.5), 3));
-        pinchDist.current = d;
-      }
-    };
-    const onTouchEnd = () => { pinchDist.current = null; };
-
-    const onFullscreenChange = () => { if (!document.fullscreenElement) setIsFullscreen(false); };
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsFullscreen(false); };
-
-    el?.addEventListener('touchstart', onTouchStart, { passive: false });
-    el?.addEventListener('touchmove', onTouchMove, { passive: false });
-    el?.addEventListener('touchend', onTouchEnd);
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      el?.removeEventListener('touchstart', onTouchStart);
-      el?.removeEventListener('touchmove', onTouchMove);
-      el?.removeEventListener('touchend', onTouchEnd);
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
-
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = content.planImage;
-    link.download = 'Plan_Fauteuil_Reception.jpg';
-    link.click();
-  };
+  const hasAnyPlan = plans.some(p => p.url);
 
   return (
-    <div className="flex-1 w-full max-w-6xl mx-auto flex flex-col gap-3 md:gap-6 pb-4 md:pb-12 h-[calc(100vh-80px)]">
-      {/* Barre outils — tout en ligne sur mobile */}
-      <div className="flex flex-row items-center justify-between gap-2 glass-panel p-3 md:p-4 rounded-lg border-l-4 border-l-secondary flex-wrap">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-secondary truncate">Plan Technique A3</h1>
-          <p className="text-[9px] md:text-[10px] text-[#f2e9e1] opacity-70 tracking-widest mt-0.5 hidden sm:block">Glissez · Zoom</p>
-        </div>
+    <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col gap-6 md:gap-10 pb-6 md:pb-16 pt-2 md:pt-4">
 
-        {/* Contrôles en ligne */}
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {/* Zoom controls */}
-          <div className="flex bg-[#121a0d] border border-primary rounded overflow-hidden">
-            <button onClick={handleZoomOut} className="px-2 md:px-3 py-1.5 md:py-2 hover:bg-primary/50 text-secondary transition-colors">
-              <ZoomOut className="w-3 h-3 md:w-4 md:h-4" />
-            </button>
-            <div className="px-2 md:px-3 py-1.5 md:py-2 text-[9px] md:text-[10px] uppercase tracking-widest border-x border-primary w-12 md:w-16 text-center text-secondary font-bold flex items-center justify-center">
-              {Math.round(scale * 100)}%
-            </div>
-            <button onClick={handleZoomIn} className="px-2 md:px-3 py-1.5 md:py-2 hover:bg-primary/50 text-secondary transition-colors">
-              <ZoomIn className="w-3 h-3 md:w-4 md:h-4" />
-            </button>
-          </div>
-
-          {/* Boutons action */}
-          <div className="flex gap-1.5 md:gap-2">
-            <button onClick={handleReset} className="px-2 md:px-4 py-1.5 md:py-2 border border-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest hover:bg-primary text-secondary transition-colors">
-              Reset
-            </button>
-            <button onClick={toggleFullscreen} className="px-2 md:px-3 py-1.5 md:py-2 bg-primary text-secondary hover:bg-secondary hover:text-background transition-colors">
-              <Maximize className="w-3 h-3 md:w-4 md:h-4" />
-            </button>
-            <button onClick={handleDownload} className="px-2 md:px-4 py-1.5 md:py-2 bg-accent text-background font-bold uppercase tracking-widest hover:bg-[#a6704d] transition-colors flex items-center gap-1.5">
-              <Download className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline text-[9px] md:text-[10px]">Export</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Conteneur plan */}
-      {/* Mobile fullscreen : fond noir, juste l'image, tap pour fermer */}
-      <div
-        ref={containerRef}
-        className={cn(
-          "relative bg-[#121a0d] border border-primary shadow-glow-primary overflow-hidden",
-          isFullscreen
-            ? "fixed inset-0 z-[9999] border-none flex items-center justify-center"
-            : "flex-1"
-        )}
-        style={{
-          cursor: isFullscreen && isMobile.current ? 'default' : 'grab',
-          ...(isFullscreen ? {
-            paddingTop: 'env(safe-area-inset-top, 0px)',
-            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          } : {}),
-        }}
-        onClick={isFullscreen && isMobile.current ? exitFullscreen : undefined}
+      {/* En-tête */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-end justify-between gap-4 border-b border-primary pb-5 md:pb-7"
       >
-        {/* Bouton fermer — desktop uniquement */}
-        {isFullscreen && !isMobile.current && (
-          <button
-            onClick={exitFullscreen}
-            className="absolute right-4 z-10 bg-background/80 backdrop-blur-sm text-secondary border border-secondary/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-secondary hover:text-background transition-colors"
-            style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
-          >
-            ✕ Fermer
-          </button>
-        )}
+        <div>
+          <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-secondary/70 font-mono mb-1">
+            03. Plans A3
+          </p>
+          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-wide text-[#f0e6d3]">
+            Plans techniques
+          </h1>
+          <p className="text-[11px] md:text-sm text-[#f0e6d3]/50 font-serif mt-1">
+            Fauteuil Réception — impression A3 recommandée
+          </p>
+        </div>
+      </motion.div>
 
-        {isFullscreen && isMobile.current ? (
-          /* ── Mobile fullscreen : image seule, sans cadre ni annotations ── */
+      {/* Grille des 3 plans */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        className="grid md:grid-cols-3 gap-4 md:gap-6"
+      >
+        {plans.map(({ key, label, url }, idx) => (
           <motion.div
-            drag
-            dragConstraints={dragBounds}
-            animate={controls}
-            style={{ scale, width: '100%', height: '100%' }}
-            className="flex items-center justify-center origin-center"
-            onClick={(e) => e.stopPropagation()}
+            key={key}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.08 }}
+            className="flex flex-col gap-3"
           >
-            <img
-              src={content.planImage}
-              alt="Plan Technique A3"
-              className="w-full h-full object-contain pointer-events-none select-none"
-            />
-          </motion.div>
-        ) : (
-          /* ── Normal / desktop fullscreen : cadre + annotations ── */
-          <motion.div
-            drag
-            dragConstraints={dragBounds}
-            animate={controls}
-            style={{ scale }}
-            className="w-full h-full flex items-center justify-center origin-center"
-          >
-            <div className="relative inline-block border-4 md:border-8 border-background p-2 md:p-4 bg-primary/20">
-              {isEditMode ? (
-                <div className="w-full max-w-[1200px]">
-                  <EditableImage
-                    src={content.planImage}
-                    onChange={(val) => setContent({...content, planImage: val})}
+            {/* Carte PDF */}
+            <div className="glass-panel rounded-xl border border-primary/30 overflow-hidden flex flex-col" style={{ minHeight: 320 }}>
+              {/* Label */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-primary/20">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-secondary" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">{label}</span>
+                </div>
+                {url && (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    download
+                    className="text-[#f0e6d3]/40 hover:text-secondary transition-colors"
+                    title="Télécharger"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+
+              {/* Visionneuse ou placeholder */}
+              <div className="flex-1">
+                {url ? (
+                  <iframe
+                    src={url}
+                    title={label}
+                    className="w-full h-full"
+                    style={{ minHeight: 280, border: 'none' }}
                   />
-                </div>
-              ) : (
-                <img
-                  src={content.planImage}
-                  alt="Plan Technique A3"
-                  className="max-w-[1200px] w-full h-auto pointer-events-none"
-                />
-              )}
-
-              {content.annotations.map((ann) => (
-                <div
-                  key={ann.id}
-                  className="absolute"
-                  style={{ top: `${ann.y}%`, left: `${ann.x}%` }}
-                  onMouseEnter={() => setActiveAnnotation(ann.id)}
-                  onMouseLeave={() => setActiveAnnotation(null)}
-                >
-                  <div className="relative -ml-3 -mt-3">
-                    <div className="w-6 h-6 md:w-8 md:h-8 bg-secondary text-background flex items-center justify-center text-[10px] md:text-xs font-bold shadow-glow-secondary cursor-help z-10 relative hover:scale-110 transition-transform">
-                      {ann.id}
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-16 gap-3 text-[#f0e6d3]/20" style={{ minHeight: 280 }}>
+                    <div className="w-12 h-12 border-2 border-dashed border-[#f0e6d3]/10 rounded flex items-center justify-center">
+                      <FileText className="w-6 h-6 opacity-30" />
                     </div>
-                    {(activeAnnotation === ann.id || isEditMode) && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`absolute top-8 md:top-10 left-1/2 -translate-x-1/2 w-44 md:w-56 p-3 md:p-4 glass-panel border-l-4 border-l-secondary z-20 ${isEditMode ? '' : 'pointer-events-none'}`}
-                      >
-                        {isEditMode ? (
-                          <>
-                            <EditableText value={ann.title} onChange={(val) => updateAnnotation(ann.id, 'title', val)} as="div" className="text-secondary font-bold text-xs uppercase tracking-widest mb-2" />
-                            <EditableText value={ann.desc} onChange={(val) => updateAnnotation(ann.id, 'desc', val)} as="div" multiline className="text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90" />
-                          </>
-                        ) : (
-                          <>
-                            <h4 className="text-secondary font-bold text-[10px] md:text-xs uppercase tracking-widest mb-1 md:mb-2">{ann.title}</h4>
-                            <p className="text-[10px] md:text-[11px] text-[#f2e9e1] font-serif leading-relaxed opacity-90">{ann.desc}</p>
-                          </>
-                        )}
-                      </motion.div>
-                    )}
+                    <span className="text-[10px] uppercase tracking-widest text-center px-4">
+                      {isEditMode ? 'Importer un PDF ci-dessous' : 'Plan à venir'}
+                    </span>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
+
+            {/* Lien téléchargement direct */}
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="flex items-center justify-center gap-2 py-2 border border-secondary/30 text-[10px] text-secondary uppercase tracking-widest font-bold hover:bg-secondary hover:text-background transition-colors rounded-lg"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Télécharger {label}
+              </a>
+            )}
           </motion.div>
-        )}
-      </div>
+        ))}
+      </motion.div>
+
+      {/* Message si aucun plan */}
+      {!hasAnyPlan && !isEditMode && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="glass-panel rounded-xl border border-primary/20 flex items-center gap-3 px-6 py-5 opacity-40"
+        >
+          <FileText className="w-4 h-4 text-[#f0e6d3]/30" />
+          <span className="text-[10px] text-[#f0e6d3]/30 uppercase tracking-widest">
+            Plans techniques — bientôt disponibles
+          </span>
+        </motion.div>
+      )}
+
+      {/* Section admin — import PDF */}
+      {isEditMode && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="flex flex-col gap-4"
+        >
+          <div className="flex items-center gap-3 border-b border-primary pb-3">
+            <FolderOpen className="w-4 h-4 text-secondary flex-shrink-0" />
+            <h2 className="text-xs md:text-sm uppercase tracking-[0.2em] font-bold text-secondary">
+              Importer les plans PDF
+            </h2>
+            <span className="text-[9px] bg-secondary/10 text-secondary border border-secondary/30 px-1.5 py-0.5 rounded uppercase tracking-widest">
+              Admin
+            </span>
+          </div>
+
+          <PlanPdfManager
+            plan1Url={content.plan1Url}
+            plan2Url={content.plan2Url}
+            plan3Url={content.plan3Url}
+            onChange={handleChange}
+          />
+        </motion.div>
+      )}
+
     </div>
   );
 }
