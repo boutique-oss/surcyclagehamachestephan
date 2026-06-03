@@ -27,6 +27,8 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
+const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|svg|bmp|tiff?|ico|avif|heic)$/i;
+
 async function ensureBucket() {
   // tentative silencieuse — le bucket doit exister dans le dashboard Supabase
   await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {});
@@ -116,15 +118,25 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
 
   async function generateZip() {
     if (pdfs.length === 0) { flash('err', 'Aucun PDF à zipper — uploadez d\'abord des fichiers.'); return; }
+
+    // Exclure les images du zip
+    const pdfFiles = pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name));
+    if (pdfFiles.length === 0) { flash('err', 'Aucun fichier non-image à zipper.'); return; }
+
     setGeneratingZip(true);
     try {
       const zip = new JSZip();
-      for (let i = 0; i < pdfs.length; i++) {
-        const f = pdfs[i];
-        setGenerateProgress(`Téléchargement ${i + 1}/${pdfs.length} — ${f.name}`);
+      for (let i = 0; i < pdfFiles.length; i++) {
+        const f = pdfFiles[i];
+        setGenerateProgress(`Téléchargement ${i + 1}/${pdfFiles.length} — ${f.name}`);
         const { data, error: dlErr } = await supabase.storage.from(BUCKET).download(f.path);
         if (dlErr || !data) throw new Error(`Impossible de télécharger ${f.name} : ${dlErr?.message}`);
-        zip.file(f.name, data);
+
+        // Nom normalisé : Hamache_Gabarit_01.ext, Hamache_Gabarit_02.ext, …
+        const ext = f.name.includes('.') ? f.name.slice(f.name.lastIndexOf('.')) : '';
+        const num = String(i + 1).padStart(2, '0');
+        const normalizedName = `Hamache_Gabarit_${num}${ext}`;
+        zip.file(normalizedName, data);
       }
       setGenerateProgress('Compression en cours…');
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -134,7 +146,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
       if (error) throw error;
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
       onZipUrlChange(urlData.publicUrl);
-      flash('ok', `ZIP généré (${pdfs.length} PDF${pdfs.length > 1 ? 's' : ''}) et lien public mis à jour.`);
+      flash('ok', `ZIP généré (${pdfFiles.length} fichier${pdfFiles.length > 1 ? 's' : ''}, sans images) et lien public mis à jour.`);
     } catch (e: unknown) {
       flash('err', `Erreur génération ZIP : ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -292,7 +304,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
               {generatingZip
                 ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 : <Zap className="w-3.5 h-3.5" />}
-              Générer ZIP depuis les PDFs ({pdfs.length})
+              Générer ZIP sans images ({pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name)).length} fichier{pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name)).length > 1 ? 's' : ''})
             </button>
             {generatingZip && generateProgress && (
               <p className="text-[9px] text-[#f2e9e1]/40 font-mono px-1">{generateProgress}</p>
