@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, Trash2, Download, FileText, FolderOpen, Archive, RefreshCw, CheckCircle, AlertCircle, Zap } from 'lucide-react';
+import { Upload, Trash2, Download, FileText, FolderOpen, Archive, RefreshCw, CheckCircle, AlertCircle, Zap, Shapes } from 'lucide-react';
 import JSZip from 'jszip';
 import { supabase } from '../lib/supabase';
 
@@ -28,6 +28,7 @@ function formatSize(bytes: number) {
 }
 
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|svg|bmp|tiff?|ico|avif|heic)$/i;
+const ACCEPTED_EXTENSIONS = /\.(pdf|dxf)$/i;
 
 async function ensureBucket() {
   // tentative silencieuse — le bucket doit exister dans le dashboard Supabase
@@ -74,7 +75,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
   useEffect(() => { loadFiles(); }, []);
 
   async function uploadPdf(file: File) {
-    if (!file.name.endsWith('.pdf')) { flash('err', 'Seuls les fichiers .pdf sont acceptés.'); return; }
+    if (!ACCEPTED_EXTENSIONS.test(file.name)) { flash('err', 'Seuls les fichiers .pdf et .dxf sont acceptés.'); return; }
     setUploadingPdf(true);
     try {
       await ensureBucket();
@@ -117,11 +118,11 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
   }
 
   async function generateZip() {
-    if (pdfs.length === 0) { flash('err', 'Aucun PDF à zipper — uploadez d\'abord des fichiers.'); return; }
+    if (pdfs.length === 0) { flash('err', 'Aucun fichier à zipper — uploadez d\'abord des PDF ou DXF.'); return; }
 
-    // Exclure les images du zip
+    // Garder PDF + DXF, exclure images
     const pdfFiles = pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name));
-    if (pdfFiles.length === 0) { flash('err', 'Aucun fichier non-image à zipper.'); return; }
+    if (pdfFiles.length === 0) { flash('err', 'Aucun fichier PDF/DXF à zipper.'); return; }
 
     setGeneratingZip(true);
     try {
@@ -226,7 +227,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
         <div className="flex items-center justify-between pb-2 border-b border-primary">
           <div className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4 text-secondary" />
-            <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-secondary">Fichiers PDF</h3>
+            <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-secondary">Fichiers PDF &amp; DXF</h3>
             <span className="text-[9px] text-[#f2e9e1]/40 font-mono">{pdfs.length} fichier{pdfs.length !== 1 ? 's' : ''}</span>
           </div>
           <button
@@ -250,7 +251,10 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
           <ul className="flex flex-col gap-1.5">
             {pdfs.map(f => (
               <li key={f.path} className="flex items-center gap-2 px-3 py-2 rounded bg-black/20 hover:bg-black/30 transition-colors">
-                <FileText className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
+                {f.name.toLowerCase().endsWith('.dxf')
+                  ? <Shapes className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" title="DXF" />
+                  : <FileText className="w-3.5 h-3.5 text-secondary flex-shrink-0" title="PDF" />
+                }
                 <span className="flex-1 text-[10px] text-[#f2e9e1]/80 font-mono truncate">{f.name}</span>
                 <span className="text-[9px] text-[#f2e9e1]/30 font-mono flex-shrink-0">{formatSize(f.size)}</span>
                 {pendingDelete === f.path ? (
@@ -304,7 +308,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
               {generatingZip
                 ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 : <Zap className="w-3.5 h-3.5" />}
-              Générer ZIP sans images ({pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name)).length} fichier{pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name)).length > 1 ? 's' : ''})
+              Générer ZIP — PDF &amp; DXF ({pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name)).length} fichier{pdfs.filter(f => !IMAGE_EXTENSIONS.test(f.name)).length > 1 ? 's' : ''})
             </button>
             {generatingZip && generateProgress && (
               <p className="text-[9px] text-[#f2e9e1]/40 font-mono px-1">{generateProgress}</p>
@@ -325,7 +329,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
           <input
             ref={pdfInputRef}
             type="file"
-            accept=".pdf"
+            accept=".pdf,.dxf"
             multiple
             className="hidden"
             onChange={e => {
@@ -334,7 +338,7 @@ export function GabaritFileManager({ zipUrl, onZipUrlChange }: GabaritFileManage
               e.target.value = '';
             }}
           />
-          <span className="text-[9px] text-[#f2e9e1]/30">Plusieurs fichiers acceptés</span>
+          <span className="text-[9px] text-[#f2e9e1]/30">PDF &amp; DXF acceptés — plusieurs fichiers</span>
         </div>
       </div>
     </div>
