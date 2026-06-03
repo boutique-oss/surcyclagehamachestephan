@@ -111,13 +111,13 @@ export function Gabarit() {
           className="flex flex-row md:flex-col gap-3 md:gap-4"
         >
           <Link to="/recette" className="group glass-card flex-1 flex flex-col justify-center items-center text-center hover:bg-secondary hover:text-background transition-colors border border-secondary shadow-glow-secondary">
-            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors">02. Recette</h3>
+            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors">01. Recette</h3>
             <p className="text-[9px] md:text-[10px] opacity-70 tracking-widest uppercase mb-2 md:mb-4 group-hover:opacity-100 hidden sm:block">Étapes &amp; coûts</p>
             <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-all" />
           </Link>
 
           <Link to="/plan" className="group glass-card flex-1 flex flex-col justify-center items-center text-center hover:bg-accent hover:text-[#f2e9e1] transition-colors border border-accent shadow-glow">
-            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors">03. Plan A3</h3>
+            <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-2 transition-colors">02. Plan A3</h3>
             <p className="text-[9px] md:text-[10px] opacity-70 tracking-widest uppercase mb-2 md:mb-4 group-hover:opacity-100 hidden sm:block">Schéma interactif</p>
             <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-all" />
           </Link>

@@ -68,7 +68,7 @@ export function Recette() {
       {/* ── En-tête ── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
         className="border-b border-primary pb-5 md:pb-7">
-        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-secondary/60 font-mono mb-1">02. Recette</p>
+        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-secondary/60 font-mono mb-1">01. Recette</p>
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-wide text-[#f0e6d3] leading-tight mb-1">
           Fabrication du bloc de mousse recyclée
         </h1>

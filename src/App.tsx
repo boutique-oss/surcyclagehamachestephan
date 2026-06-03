@@ -14,9 +14,9 @@ import { AdminButton } from './components/AdminLogin';
 
 const NAV_LINKS = [
   { to: '/', label: 'Accueil', full: '00. Accueil', icon: Armchair },
-  { to: '/gabarit', label: 'Gabarit', full: '01. Gabarit', icon: LayoutTemplate },
-  { to: '/recette', label: 'Recette', full: '02. Recette', icon: FileText },
-  { to: '/plan', label: 'Plan A3', full: '03. Plan A3', icon: Map },
+  { to: '/recette', label: 'Recette', full: '01. Recette', icon: FileText },
+  { to: '/plan', label: 'Plan A3', full: '02. Plan A3', icon: Map },
+  { to: '/gabarit', label: 'Fichier', full: '03. Fichier', icon: LayoutTemplate },
 ];
 
 /* ── Warm editorial blobs ── */

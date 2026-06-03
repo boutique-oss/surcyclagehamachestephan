@@ -46,7 +46,7 @@ export function Plan() {
       >
         <div>
           <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-secondary/70 font-mono mb-1">
-            03. Plans A3
+            02. Plans A3
           </p>
           <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-wide text-[#f0e6d3]">
             Plans techniques
