@@ -1,5 +1,6 @@
-import { Download, FileText, FolderOpen } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState } from 'react';
+import { Download, FileText, FolderOpen, Maximize2, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useContent } from '../lib/useContent';
 import { useAdmin } from '../context/AdminContext';
 import { PlanPdfManager } from '../components/PlanPdfManager';
@@ -22,6 +23,7 @@ const PLAN_KEYS = ['plan1Url', 'plan2Url', 'plan3Url'] as const;
 export function Plan() {
   const { isEditMode } = useAdmin();
   const [content, setContent] = useContent<PlanContent>('page_plan_v2', defaultContent);
+  const [fullscreen, setFullscreen] = useState<{ label: string; url: string } | null>(null);
 
   const handleChange = (key: 'plan1Url' | 'plan2Url' | 'plan3Url', url: string) => {
     setContent({ ...content, [key]: url });
@@ -57,56 +59,68 @@ export function Plan() {
         </div>
       </motion.div>
 
-      {/* Grille des 3 plans */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.08 }}
-        className="grid md:grid-cols-3 gap-4 md:gap-6"
-      >
+      {/* Plans empilés — 1 par ligne */}
+      <div className="flex flex-col gap-6 md:gap-8">
         {plans.map(({ key, label, url }, idx) => (
           <motion.div
             key={key}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.08 }}
+            transition={{ delay: 0.08 + idx * 0.08 }}
             className="flex flex-col gap-3"
           >
-            {/* Carte PDF */}
-            <div className="glass-panel rounded-xl border border-primary/30 overflow-hidden flex flex-col" style={{ minHeight: 320 }}>
-              {/* Label */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-primary/20">
+            {/* Carte PDF — plein format */}
+            <div
+              className="glass-panel rounded-xl border border-primary/30 overflow-hidden flex flex-col"
+              style={{ minHeight: 480 }}
+            >
+              {/* Barre de titre */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-primary/20 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-secondary" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">{label}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-secondary">{label}</span>
                 </div>
-                {url && (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    download
-                    className="text-[#f0e6d3]/40 hover:text-secondary transition-colors"
-                    title="Télécharger"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </a>
-                )}
+                <div className="flex items-center gap-3">
+                  {url && (
+                    <>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                        className="text-[#f0e6d3]/40 hover:text-secondary transition-colors"
+                        title="Télécharger"
+                      >
+                        <Download className="w-4 h-4" />
+                      </a>
+                      <button
+                        onClick={() => setFullscreen({ label, url })}
+                        className="text-[#f0e6d3]/40 hover:text-secondary transition-colors"
+                        title="Plein écran"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Visionneuse ou placeholder */}
+              {/* Visionneuse */}
               <div className="flex-1">
                 {url ? (
                   <iframe
                     src={url}
                     title={label}
                     className="w-full h-full"
-                    style={{ minHeight: 280, border: 'none' }}
+                    style={{ minHeight: 440, border: 'none' }}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-16 gap-3 text-[#f0e6d3]/20" style={{ minHeight: 280 }}>
-                    <div className="w-12 h-12 border-2 border-dashed border-[#f0e6d3]/10 rounded flex items-center justify-center">
-                      <FileText className="w-6 h-6 opacity-30" />
+                  <div
+                    className="flex flex-col items-center justify-center gap-3 text-[#f0e6d3]/20"
+                    style={{ minHeight: 440 }}
+                  >
+                    <div className="w-14 h-14 border-2 border-dashed border-[#f0e6d3]/10 rounded flex items-center justify-center">
+                      <FileText className="w-7 h-7 opacity-30" />
                     </div>
                     <span className="text-[10px] uppercase tracking-widest text-center px-4">
                       {isEditMode ? 'Importer un PDF ci-dessous' : 'Plan à venir'}
@@ -116,14 +130,14 @@ export function Plan() {
               </div>
             </div>
 
-            {/* Lien téléchargement direct */}
+            {/* Bouton téléchargement */}
             {url && (
               <a
                 href={url}
                 target="_blank"
                 rel="noreferrer"
                 download
-                className="flex items-center justify-center gap-2 py-2 border border-secondary/30 text-[10px] text-secondary uppercase tracking-widest font-bold hover:bg-secondary hover:text-background transition-colors rounded-lg"
+                className="self-start flex items-center gap-2 py-2 px-5 border border-secondary/30 text-[10px] text-secondary uppercase tracking-widest font-bold hover:bg-secondary hover:text-background transition-colors rounded-lg"
               >
                 <Download className="w-3.5 h-3.5" />
                 Télécharger {label}
@@ -131,7 +145,7 @@ export function Plan() {
             )}
           </motion.div>
         ))}
-      </motion.div>
+      </div>
 
       {/* Message si aucun plan */}
       {!hasAnyPlan && !isEditMode && (
@@ -174,6 +188,61 @@ export function Plan() {
           />
         </motion.div>
       )}
+
+      {/* ── Modal plein écran ── */}
+      <AnimatePresence>
+        {fullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] flex flex-col"
+            style={{ background: 'rgba(6,4,2,0.97)' }}
+          >
+            {/* Barre plein écran */}
+            <div
+              className="flex items-center justify-between px-5 py-3 border-b flex-shrink-0"
+              style={{ borderColor: 'rgba(212,165,116,0.15)' }}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-secondary" />
+                <span className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">
+                  {fullscreen.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <a
+                  href={fullscreen.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                  className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#f0e6d3]/50 hover:text-secondary transition-colors border border-[#f0e6d3]/15 hover:border-secondary/40 px-3 py-1.5 rounded-lg"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Télécharger
+                </a>
+                <button
+                  onClick={() => setFullscreen(null)}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-[#f0e6d3]/60 hover:text-[#f0e6d3] transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Iframe plein écran */}
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={fullscreen.url}
+                title={fullscreen.label}
+                className="w-full h-full"
+                style={{ border: 'none' }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
