@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, ElementType } from 'react';
 import { motion } from 'motion/react';
 import {
   ExternalLink, Wind, Droplets, FlaskConical,
@@ -70,7 +70,7 @@ function KPI({ label, value, unit, sub, color = '#d4a574' }: {
 
 /* Étape avec icône */
 function Step({ n, icon: Icon, titre, color = '#d4a574', children }: {
-  n: number; icon: React.ElementType; titre: string; color?: string; children: ReactNode;
+  n: number; icon: ElementType; titre: string; color?: string; children: ReactNode;
 }) {
   return (
     <motion.div
