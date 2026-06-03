@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { ExternalLink, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
@@ -23,7 +24,7 @@ function Bar({ pct, color, label, value }: { pct: number; color: string; label: 
 }
 
 /* ── Chip d'alerte inline ── */
-function Chip({ type, children }: { type: 'warn' | 'ok' | 'info'; children: React.ReactNode }) {
+function Chip({ type, children }: { type: 'warn' | 'ok' | 'info'; children: ReactNode }) {
   const styles = {
     warn: { bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)', color: '#f87171', Icon: AlertTriangle },
     ok:   { bg: 'rgba(212,165,116,0.08)', border: 'rgba(212,165,116,0.25)', color: '#d4a574', Icon: CheckCircle },
@@ -41,7 +42,7 @@ function Chip({ type, children }: { type: 'warn' | 'ok' | 'info'; children: Reac
 }
 
 /* ── Une étape numérotée ── */
-function Etape({ n, titre, children }: { n: number; titre: string; children: React.ReactNode }) {
+function Etape({ n, titre, children }: { n: number; titre: string; children: ReactNode }) {
   return (
     <div className="flex gap-4 items-start">
       <div
