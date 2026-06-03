@@ -553,6 +553,12 @@ function TabAnimations() {
       <div className="border border-white/5 rounded p-3">
         <p className="text-[9px] uppercase tracking-widest text-secondary font-bold mb-3">Effets visuels</p>
         <Toggle
+          on={s.spline}
+          onChange={v => set({ spline: v })}
+          label="Scène 3D Spline"
+          desc="Fond 3D interactif — désactiver pour alléger les performances"
+        />
+        <Toggle
           on={s.particles}
           onChange={v => set({ particles: v })}
           label="Particules ambrées"

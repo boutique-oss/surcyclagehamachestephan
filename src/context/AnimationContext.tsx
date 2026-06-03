@@ -6,6 +6,7 @@ export interface AnimSettings {
   cursorGlow: boolean;
   logoShimmer: boolean;
   blobIntensity: number; // 0–100
+  spline: boolean;
 }
 
 const DEFAULTS: AnimSettings = {
@@ -14,6 +15,7 @@ const DEFAULTS: AnimSettings = {
   cursorGlow: true,
   logoShimmer: true,
   blobIntensity: 100,
+  spline: true,
 };
 
 const LS_KEY = 'anim_settings';
