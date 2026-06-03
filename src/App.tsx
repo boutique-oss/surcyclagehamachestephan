@@ -126,7 +126,15 @@ function SplineBackground() {
       style={{ zIndex: 0, opacity: 0.55 }}
     >
       <Suspense fallback={null}>
-        <Spline scene="https://prod.spline.design/tCFrNCbx0Yp4Z8iR/scene.splinecode" />
+        <Spline
+          scene="https://prod.spline.design/tCFrNCbx0Yp4Z8iR/scene.splinecode"
+          onLoad={(app: { findObjectByName: (n: string) => { visible: boolean } | undefined }) => {
+            ['Cesar II', 'cesar ii', 'CESAR II'].forEach(n => {
+              const o = app.findObjectByName(n);
+              if (o) o.visible = false;
+            });
+          }}
+        />
       </Suspense>
     </div>
   );

@@ -4,6 +4,16 @@ import { useAnim } from '../context/AnimationContext';
 
 const Spline = lazy(() => import('@splinetool/react-spline'));
 
+type SplineApp = { findObjectByName: (name: string) => { visible: boolean } | undefined };
+
+function hideSplineObjects(app: SplineApp) {
+  const hidden = ['Cesar II', 'cesar ii', 'CESAR II'];
+  hidden.forEach(name => {
+    const obj = app.findObjectByName(name);
+    if (obj) obj.visible = false;
+  });
+}
+
 /* ── Floating particles for intro ── */
 const INTRO_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
   id: i,
@@ -55,7 +65,10 @@ export function Intro({ onEnter }: IntroProps) {
           {s.spline && (
             <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.6 }}>
               <Suspense fallback={null}>
-                <Spline scene="https://prod.spline.design/tCFrNCbx0Yp4Z8iR/scene.splinecode" />
+                <Spline
+                  scene="https://prod.spline.design/tCFrNCbx0Yp4Z8iR/scene.splinecode"
+                  onLoad={hideSplineObjects}
+                />
               </Suspense>
             </div>
           )}
