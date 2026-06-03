@@ -15,7 +15,10 @@ import { AdminButton } from './components/AdminLogin';
 import { AnimationProvider, useAnim } from './context/AnimationContext';
 import { Intro } from './components/Intro';
 import { AnimatePresence, motion } from 'motion/react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, createContext, useContext } from 'react';
+
+const IntroCtx = createContext<() => void>(() => {});
+const useShowIntro = () => useContext(IntroCtx);
 const Spline = lazy(() => import('@splinetool/react-spline'));
 
 const NAV_LINKS = [
@@ -200,6 +203,7 @@ function LiquidBackground() {
 function TopBar() {
   const location = useLocation();
   const { s } = useAnim();
+  const showIntro = useShowIntro();
   return (
     <nav
       className="fixed top-0 w-full z-50 h-14 md:h-16 flex items-center justify-between px-4 md:px-12 border-b"
@@ -211,10 +215,13 @@ function TopBar() {
         boxShadow: '0 1px 0 rgba(255,220,150,0.03) inset, 0 4px 32px rgba(5,3,1,0.7)',
       }}
     >
-      <Link to="/" className="flex items-center gap-3 group">
-        <div
+      <div className="flex items-center gap-3 group">
+        {/* Logo — clic pour revenir à l'intro */}
+        <button
+          onClick={showIntro}
+          title="Revenir à l'intro"
           className={cn(
-            'w-7 h-7 md:w-8 md:h-8 rounded-[2px] flex items-center justify-center font-bold text-sm transition-all group-hover:scale-110',
+            'w-7 h-7 md:w-8 md:h-8 rounded-[2px] flex items-center justify-center font-bold text-sm transition-all group-hover:scale-110 cursor-pointer',
             s.logoShimmer ? 'logo-shimmer' : 'text-[#0d0a07]'
           )}
           style={s.logoShimmer ? {
@@ -225,13 +232,13 @@ function TopBar() {
             boxShadow: '0 0 20px rgba(212,165,116,0.35)',
           }}
         >
-          <span className={s.logoShimmer ? '' : ''}>R</span>
-        </div>
-        <div className="hidden sm:flex flex-col leading-none">
+          R
+        </button>
+        <Link to="/" className="hidden sm:flex flex-col leading-none">
           <span className="text-[8px] uppercase tracking-[0.35em] text-secondary/50 font-mono">Atelier Hamache</span>
           <span className="text-sm md:text-base font-bold tracking-[0.15em] uppercase text-[#f0e6d3]">Réception</span>
-        </div>
-      </Link>
+        </Link>
+      </div>
 
       <div className="hidden md:flex gap-10 text-[10px] font-semibold uppercase tracking-widest">
         {NAV_LINKS.map((link) => {
@@ -293,7 +300,7 @@ function AppInner() {
   const [intro, setIntro] = useState(true);
 
   return (
-    <>
+    <IntroCtx.Provider value={() => setIntro(true)}>
       <AnimatePresence>{intro && <Intro onEnter={() => setIntro(false)} />}</AnimatePresence>
 
     <HashRouter>
@@ -322,7 +329,7 @@ function AppInner() {
         </main>
       </motion.div>
     </HashRouter>
-    </>
+    </IntroCtx.Provider>
   );
 }
 
