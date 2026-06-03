@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Ruler, Weight, Download, Archive, FolderOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useContent } from '../lib/useContent';
-import { EditableText, EditableImage } from '../components/Editable';
+import { EditableText } from '../components/Editable';
 import { useAdmin } from '../context/AdminContext';
 import { GabaritFileManager } from '../components/GabaritFileManager';
 
@@ -26,31 +26,6 @@ export function Gabarit() {
 
   return (
     <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col gap-5 md:gap-10 pb-6 md:pb-12 pt-3 md:pt-6">
-
-      {/* ── Hero ── */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full h-[30vh] sm:h-[38vh] md:h-[45vh] min-h-[200px] md:min-h-[350px] rounded-xl md:rounded-2xl overflow-hidden shadow-glow-primary border border-primary/20"
-      >
-        <EditableImage
-          src={content.heroImage}
-          onChange={(val) => setContent({ ...content, heroImage: val })}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-transparent pointer-events-none" />
-
-        <div className="absolute bottom-0 left-0 p-4 sm:p-6 md:p-10 w-full">
-          <div className="text-[9px] md:text-[10px] uppercase text-secondary tracking-widest mb-1 md:mb-3">Preview : Vue d'ensemble</div>
-          <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-widest uppercase mb-2 md:mb-4 text-[#f2e9e1] flex gap-2 md:gap-3 flex-wrap">
-            <EditableText value={content.title1} onChange={(val) => setContent({ ...content, title1: val })} />
-            <EditableText value={content.title2} onChange={(val) => setContent({ ...content, title2: val })} className="text-secondary font-normal" />
-          </h1>
-          <div className="text-xs md:text-base text-[#f2e9e1] opacity-80 max-w-2xl font-serif hidden sm:block">
-            <EditableText value={content.description} onChange={(val) => setContent({ ...content, description: val })} multiline />
-          </div>
-        </div>
-      </motion.div>
 
       {/* ── Specs + CTAs ── */}
       <div className="grid md:grid-cols-3 gap-3 md:gap-8">
@@ -123,61 +98,6 @@ export function Gabarit() {
           </Link>
         </motion.div>
       </div>
-
-      {/* ── Image gabarit (plan) ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="flex flex-col gap-3"
-      >
-        <div className="flex items-center gap-3 border-b border-primary pb-3">
-          <h2 className="text-xs md:text-sm uppercase tracking-[0.2em] font-bold text-secondary">Vue gabarit</h2>
-          <span className="text-[10px] text-[#f2e9e1] opacity-40 uppercase tracking-widest">Plan coté</span>
-        </div>
-
-        {isEditMode && (
-          <div className="flex gap-2 items-center">
-            <input
-              type="text"
-              value={content.gabaritImage}
-              onChange={e => setContent({ ...content, gabaritImage: e.target.value })}
-              placeholder="https://… URL de l'image gabarit"
-              className="flex-1 bg-[#0d1309] border border-primary text-xs text-[#f2e9e1] px-3 py-2 rounded focus:outline-none focus:border-secondary transition-colors font-mono"
-            />
-            {content.gabaritImage && (
-              <button
-                onClick={() => setContent({ ...content, gabaritImage: '' })}
-                className="text-[#f2e9e1]/30 hover:text-red-400 transition-colors text-[10px] uppercase tracking-widest px-2"
-              >
-                Effacer
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="relative w-full rounded-xl overflow-hidden border border-secondary/20 bg-[#0a100a] min-h-[180px]">
-          {content.gabaritImage ? (
-            <img
-              src={content.gabaritImage}
-              alt="Vue gabarit"
-              className="w-full object-contain max-h-[70vh]"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 gap-3 text-[#f2e9e1]/20">
-              <div className="w-16 h-16 border-2 border-dashed border-[#f2e9e1]/10 rounded flex items-center justify-center">
-                <svg viewBox="0 0 64 64" className="w-8 h-8 opacity-30" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="8" y="12" width="48" height="40" rx="2" />
-                  <line x1="8" y1="24" x2="56" y2="24" />
-                  <line x1="8" y1="36" x2="56" y2="36" />
-                  <line x1="20" y1="12" x2="20" y2="52" />
-                </svg>
-              </div>
-              <span className="text-[10px] uppercase tracking-widest">Image gabarit à venir</span>
-            </div>
-          )}
-        </div>
-      </motion.div>
 
       {/* ── Téléchargement ZIP ── */}
       <motion.div
